@@ -27,9 +27,9 @@ gymnasium/spaces/space.ts
 
 abstract class Space {
     private _shape: number[]; // Array of integers
-    public dtype: "int32" | "float32" | "boolean";
+    public dtype: tf.DataType;
     
-    constructor(shape: number[], dtype: "int32" | "float32" | "boolean") {
+    constructor(shape: number[], dtype: tf.DataType) {
         this._shape = shape;
         this.dtype = dtype;
     }
@@ -75,7 +75,7 @@ class Box extends Space {
     private low: number;
     private high: number;
     
-    constructor(low: number, high: number, shape: number[], dtype: "int32" | "float32" | "boolean") {
+    constructor(low: number, high: number, shape: number[], dtype: tf.DataType) {
         super(shape, dtype)
         this.low = low;
         this.high = high;
