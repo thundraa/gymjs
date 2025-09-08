@@ -169,14 +169,14 @@ abstract class Env {
 }
 ```
 
-### Qs
-1. Shall we make abstract classes `ActionSpace` and `ObsSpace` that make a dummy extension of class `Space` so that we don't need to specify all action classes for `actionSpace` or all observation classes for `observationSpace`.
-
 
 References:
 https://github.com/tensorflow/tfjs/blob/master/tfjs-core/src/types.ts (for tensorflow data types, inteface SingleValueMap)
 
 https://gymnasium.farama.org
+
 https://github.com/Farama-Foundation/Gymnasium
+
 https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/
+
 https://github.com/zemlyansky/ppo-tfjs/
