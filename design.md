@@ -26,16 +26,12 @@ gymnasium/spaces/space.ts
 // Corresponding to types that tensowflow js supports
 
 abstract class Space {
-    private _shape: number[]; // Array of integers
+    public shape: number[]; // Array of integers
     public dtype: "int32" | "float32" | "boolean";
     
     constructor(shape: number[], dtype: "int32" | "float32" | "boolean") {
-        this._shape = shape;
+        this.shape = shape;
         this.dtype = dtype;
-    }
-
-    get shape(): number[] {
-        return this._shape;
     }
 
     abstract sample(): tf.Tensor | number;
