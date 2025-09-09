@@ -209,11 +209,11 @@ class CartPoleEnv extends Env {
         ... // A bunch of constants and configurations
     }
 
-    reset(): [tf.Tensor, object] {
+    reset(): [tf.Tensor, {}] {
         ...
     }
 
-    async step(action: number): [tf.Tensor, number, boolean, boolean, object] {
+    async step(action: number): [tf.Tensor, number, boolean, boolean, {}] {
         ...
     }
 
