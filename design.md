@@ -203,8 +203,8 @@ class CartPoleEnv extends Env {
     constructor(suttonBartoReward: boolean = false, renderMode: str = "rgb_array") {
         this.suttonBartoReward = suttonBartoReward;
         this.renderMode = renderMode;
-        this.actionSpace = Discrete(n=2, start=0);
-        this.observationSpace = Box(low=-Infinity, high=Infinity, shape=[4], dtype="float32"); // Not quite but it's alright for now
+        this.actionSpace = new Discrete(n=2, start=0);
+        this.observationSpace = new Box(low=-Infinity, high=Infinity, shape=[4], dtype="float32"); // Not quite but it's alright for now
 
         ... // A bunch of constants and configurations
     }
