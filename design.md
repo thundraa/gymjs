@@ -169,6 +169,64 @@ abstract class Env {
 }
 ```
 
+### CartPole Env
+https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/classic_control/cartpole.py
+
+Class CartPoleEnv in general is like:
+```py
+class CartPoleEnv(gym.Env):
+    def __init__(self, sutton_barto_reward, render_mode):
+        ...
+    
+    def step():
+        ...
+
+    def reset():
+        ...
+
+    def render():
+        ...
+```
+
+- `sutton_barto_reward` changes the way rewards work
+- `render_mode` Chooses render mode between `human` and `rgb_array`
+
+It basically an implementation of the abstract class `gym.Env`.
+
+Proposed Typescript equivalent:
+
+gymnasium/envs/classic_control/cartpole.ts
+```ts
+class CartPoleEnv extends Env {
+    private suttonBartoReward: boolean;
+
+    constructor(suttonBartoReward: boolean = false, renderMode: str = "rgb_array") {
+        this.suttonBartoReward = suttonBartoReward;
+        this.renderMode = renderMode;
+        this.actionSpace = Discrete(n=2, start=0);
+        this.observationSpace = Box(low=-Infinity, high=Infinity, shape=[4], dtype="float32"); // Not quite but it's alright for now
+
+        ... // A bunch of constants and configurations
+    }
+
+    reset(): [tf.Tensor, object] {
+        ...
+    }
+
+    async step(action: number): [tf.Tensor, number, boolean, boolean, object] {
+        ...
+    }
+
+    async render(): void {
+        ...
+    }
+
+    close(): void {
+        // Nothing
+    }
+}
+```
+
 
 ### References:
 
