@@ -130,6 +130,13 @@ class Discrete extends Space {
 }
 ```
 
+### ObsSpace and ActSpace
+It's important to distinguish between spaces that are observations and spaces that are actions when defining an environment. We simply define a type for actions spaces and observations spaces:
+
+```ts
+type ActSpace = Discrete | ... // Other types that we might add later
+type ObsSpace = Box | ... // Other types that we might add later
+```
 
 
 ### Env
@@ -159,8 +166,8 @@ gymnasium/core.ts
 ```ts
 abstract class Env {
     protected renderMode: str;
-    protected actionSpace: Discrete;
-    protected observationSpace: Box;
+    protected actionSpace: ActSpace;
+    protected observationSpace: ObsSpace;
 
     abstract reset(): [Box, object];
     abstract async step(action: number): [Box, number, boolean, boolean, object]; // Action is number for now
