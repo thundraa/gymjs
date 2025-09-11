@@ -162,8 +162,8 @@ gymnasium/core.ts
 ```ts
 abstract class Env {
     protected renderMode: str;
-    protected actionSpace: ActSpace;
-    protected observationSpace: ObsSpace;
+    public actionSpace: ActSpace;
+    public observationSpace: ObsSpace;
 
     abstract reset(): [tf.Tensor, {}];
     abstract async step(action: number): [tf.Tensor, number, boolean, boolean, {}]; // Action is number for now
