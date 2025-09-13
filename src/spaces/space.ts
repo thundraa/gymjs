@@ -1,6 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
 
-
 abstract class Space {
     public shape: number[];
     public dtype: tf.DataType;

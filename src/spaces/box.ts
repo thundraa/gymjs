@@ -1,7 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 import { Space } from './space';
 
-
 class Box extends Space {
     public low: number;
     public high: number;
