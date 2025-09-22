@@ -6,7 +6,7 @@ import { Box } from './spaces/box';
 type ActSpace = Discrete;
 type ObsSpace = Box;
 
-type InfoType = Record<string, number | string | number[] | string[] | tf.Tensor>;
+type InfoType<T = any> = Record<string, T>;
 
 abstract class Env {
     protected renderMode: string;
