@@ -111,8 +111,8 @@ gymnasium/spaces/discrete
 .ts
 ```ts
 class Discrete extends Space {
-    private n: number;
-    private start: number;
+    public n: number;
+    public start: number;
     
     constructor(n: number, start: number = 0) {
         super(shape: [], dtype: "int32")
