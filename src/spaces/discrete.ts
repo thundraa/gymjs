@@ -15,9 +15,6 @@ class Discrete extends Space {
         // Might be a bit too elaborate to use TF but in case we use seeds this is the way
         let randomNumTensor = tf.randomUniformInt([1], this.start, this.start + this.n);
         let [randomNumber] = randomNumTensor.dataSync();
-        if(randomNumber === undefined) {
-            throw new Error("Random number can't be undefined!");
-        }
 
         return randomNumber;
     }
