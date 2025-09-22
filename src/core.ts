@@ -6,7 +6,7 @@ import { Box } from './spaces/box';
 type ActSpace = Discrete;
 type ObsSpace = Box;
 
-type InfoType<T = any> = Record<string, T>;
+type InfoType<T> = Record<string, T>;
 
 abstract class Env {
     protected renderMode: string;
@@ -19,8 +19,8 @@ abstract class Env {
         this.renderMode = renderMode;
     }
 
-    abstract reset(): [tf.Tensor, InfoType | null];
-    abstract step(action: tf.Tensor | number): Promise<[tf.Tensor, number, boolean, boolean, InfoType | null]>; // Action is number for now
+    abstract reset(): [tf.Tensor, InfoType<any> | null];
+    abstract step(action: tf.Tensor | number): Promise<[tf.Tensor, number, boolean, boolean, InfoType<any> | null]>; // Action is number for now
     abstract render(): Promise<void | tf.Tensor>;
     abstract close(): void;
 }
