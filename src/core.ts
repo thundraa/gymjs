@@ -8,7 +8,7 @@ type ObsSpace = Box;
 
 type InfoType<T> = Record<string, T>;
 
-abstract class Env {
+abstract class Env<T> {
     protected renderMode: string;
     public actionSpace: ActSpace;
     public observationSpace: ObsSpace;
@@ -19,8 +19,8 @@ abstract class Env {
         this.renderMode = renderMode;
     }
 
-    abstract reset(): [tf.Tensor, InfoType<any> | null];
-    abstract step(action: tf.Tensor | number): Promise<[tf.Tensor, number, boolean, boolean, InfoType<any> | null]>; // Action is number for now
+    abstract reset(): [tf.Tensor, InfoType<T> | null];
+    abstract step(action: tf.Tensor | number): Promise<[tf.Tensor, number, boolean, boolean, InfoType<T> | null]>; // Action is number for now
     abstract render(): Promise<void | tf.Tensor>;
     abstract close(): void;
 }
