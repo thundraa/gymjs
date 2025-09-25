@@ -6,9 +6,9 @@ import { Box } from './spaces/box';
 type ActSpace = Discrete;
 type ObsSpace = Box;
 
-type InfoType<T> = Record<string, T>;
+export type InfoType<T> = Record<string, T>;
 
-abstract class Env<T> {
+export abstract class Env<T> {
     protected renderMode: string;
     public actionSpace: ActSpace;
     public observationSpace: ObsSpace;
@@ -24,5 +24,3 @@ abstract class Env<T> {
     abstract render(): Promise<void | tf.Tensor>;
     abstract close(): void;
 }
-
-export { Env }
