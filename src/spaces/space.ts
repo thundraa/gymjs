@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 
-abstract class Space {
+export abstract class Space {
     public shape: number[];
     public dtype: tf.DataType;
     
@@ -11,5 +11,3 @@ abstract class Space {
     
     abstract sample(): tf.Tensor | number;
 }
-
-export { Space }
