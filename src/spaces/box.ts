@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 import { Space } from './space';
 
-class Box extends Space {
+export class Box extends Space {
     public low: number;
     public high: number;
     
@@ -15,5 +15,3 @@ class Box extends Space {
         return tf.randomUniform(this.shape, this.low, this.high, this.dtype);
     }
 }
-
-export { Box }

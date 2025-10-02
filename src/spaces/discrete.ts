@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 import { Space } from './space';
 
-class Discrete extends Space {
+export class Discrete extends Space {
     public n: number;
     public start: number;
     
@@ -19,5 +19,3 @@ class Discrete extends Space {
         return randomNumber;
     }
 }
-
-export { Discrete }
