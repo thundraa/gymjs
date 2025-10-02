@@ -5,28 +5,40 @@ import { Discrete } from "../../spaces/discrete";
 import { Box } from "../../spaces/box";
 import { Env } from "../../core";
 
-
+/**
+ * CartPole, an environment that corresponds to the version of the cart-pole problem described by Barto, Sutton, and Anderson
+ * The Cartpole problem in reinforcement learning involves balancing a pole on a moving cart along a track, where the agent
+ * must learn to keep the pole upright by choosing to move the cart left or right based on the state of the system.
+ */
 export class CartPoleEnv extends Env<null> {
-    public static readonly gravity = 9.8;
-    public static readonly massCart = 1.0;
-    public static readonly massPole = 0.1;
-    public static readonly totalMass = CartPoleEnv.massPole + CartPoleEnv.massCart;
-    public static readonly poleLength = 0.5;
-    public static readonly polemassLength = CartPoleEnv.massPole * CartPoleEnv.poleLength;
-    public static readonly forceMag = 10.0;
-    public static readonly tau = 0.02;
-    public static readonly kinematicsIntegrator = "euler";
-    public static readonly thetaThresholdRadians = 12 * 2 * Math.PI / 360;
-    public static readonly xThreshold = 2.4;
-    public static readonly screenWidth = 600;
-    public static readonly screenHeight = 400;
-    public static readonly frameRate = 60;
+    // A bunch of environment constants 
+    static readonly gravity = 9.8;
+    static readonly massCart = 1.0;
+    static readonly massPole = 0.1;
+    static readonly totalMass = CartPoleEnv.massPole + CartPoleEnv.massCart;
+    static readonly poleLength = 0.5;
+    static readonly polemassLength = CartPoleEnv.massPole * CartPoleEnv.poleLength;
+    static readonly forceMag = 10.0;
+    static readonly tau = 0.02;
+    static readonly kinematicsIntegrator = "euler";
+    static readonly thetaThresholdRadians = 12 * 2 * Math.PI / 360;
+    static readonly xThreshold = 2.4;
+    static readonly screenWidth = 600;
+    static readonly screenHeight = 400;
+    static readonly frameRate = 60;
 
+    // Per-instance variables
     private readonly suttonBartoReward: boolean;
     private state: [number, number, number, number] | null;
     private game: Phaser.Game | null;
     private canvas: HTMLCanvasElement | null;
 
+    /**
+     * Creates an instance of CartPoleEnv.
+     * @param suttonBartoReward - If `True` the reward function matches the original sutton barto implementation
+     * @param renderMode - Specify the render mode, null means no rendering and "human" means rendering on a canvas.
+     * @param canvas - Specify which canvas for phaser to render into.
+     */
     constructor(suttonBartoReward: boolean = false, renderMode = null, canvas: HTMLCanvasElement | null = null) {
         let actionSpace = new Discrete(2);
         let observationSpace = new Box(-Infinity, Infinity, [4], "float32");
@@ -37,11 +49,17 @@ export class CartPoleEnv extends Env<null> {
         this.game = null;
         this.canvas = canvas;
 
+        // Render by default if render mode is human
         if(renderMode === "human") {
             this.render();
         }
     }
 
+    /**
+     * Resets the environment.
+     * @param suttonBartoReward - If `True` the reward function matches the original sutton barto implementation
+     * @returns a tuple of observation (type float32 and shape [4]) and info (null)
+     */
     reset(): [tf.Tensor, null] {
         let randomState = tf.randomUniform(this.observationSpace.shape, -0.05, 0.05, this.observationSpace.dtype);
         let [x, xDot, theta, thetaDot] = randomState.dataSync();
@@ -50,6 +68,11 @@ export class CartPoleEnv extends Env<null> {
         return [randomState, null]
     }
 
+    /**
+     * Takes one step in the environment.
+     * @param action - The action chosen, 0 means push to the left and 1 means push to the right
+     * @returns A tuple of observation (type float32 and shape [4]), reward, terminated, truncated and info (null)
+     */
     async step(action: number): Promise<[tf.Tensor, number, boolean, boolean, null]> {
         if(this.state === null) {
             throw new Error("State variables must be defined.");
@@ -172,34 +195,32 @@ class CartPoleScene extends Phaser.Scene {
         }
         this.previousGraphics = graphics;
 
-        let worldWidth = CartPoleEnv.xThreshold * 2
-        let scale = CartPoleEnv.screenWidth / worldWidth
-        let poleWidth = 10.0
-        let poleLen = scale * (2 * CartPoleEnv.poleLength)
-        let cartWidth = 50.0
-        let cartHeight = 30.0
+        let worldWidth = CartPoleEnv.xThreshold * 2;
+        let scale = CartPoleEnv.screenWidth / worldWidth;
+        let poleWidth = 10.0;
+        let poleLen = scale * (2 * CartPoleEnv.poleLength);
+        let cartWidth = 50.0;
+        let cartHeight = 30.0;
 
         let [x, _, theta, __] = state;
 
-        graphics.fillStyle(0x000000);
-
         // Left, right, top, bottom
-        let [l, r, t, b] = [-cartWidth / 2, cartWidth / 2, cartHeight / 2, -cartHeight / 2]
+        let [l, r, t, b] = [-cartWidth / 2, cartWidth / 2, cartHeight / 2, -cartHeight / 2];
+
         let axleOffset = cartHeight / 4.0;
         let cartX = x * scale + CartPoleEnv.screenWidth / 2.0;
         let cartY = CartPoleEnv.screenHeight - 100;
 
-        // Set the line style (color and width)
-        graphics.lineStyle(2, 0xffffff, 1); // 2 pixels wide, red color
+        // Background color
+        graphics.fillStyle(0x000000);
 
         // Draw a horizontal line
-        graphics.moveTo(0, cartY); // Starting point (x, y)
-        graphics.lineTo(CartPoleEnv.screenWidth, cartY); // Ending point (x, y)
-
-        // Render the line
+        graphics.lineStyle(2, 0xffffff, 1);
+        graphics.moveTo(0, cartY);
+        graphics.lineTo(CartPoleEnv.screenWidth, cartY);
         graphics.strokePath();
 
-        // Initialize the cartesian coordinates
+        // Draw the cart
         let cartCoords = [
             [l, b], // Bottom-left
             [l, t], // Top-left
@@ -207,26 +228,18 @@ class CartPoleScene extends Phaser.Scene {
             [r, b]  // Bottom-right
         ];
 
-        // Update the cartCoords with the new coordinates
         cartCoords = cartCoords.map((c) => [c[0] + cartX, c[1] + cartY]);
-
-        // Begin drawing the polygon
         graphics.fillStyle(0xffffff);
         graphics.beginPath();
         graphics.moveTo(cartCoords[0][0], cartCoords[0][1]);
-
-        // Loop through the coordinates to create the polygon
         for (let i = 1; i < 4; i++) {
             graphics.lineTo(cartCoords[i][0], cartCoords[i][1]);
         }
-
-        // Close the path and fill the polygon
         graphics.lineTo(cartCoords[0][0], cartCoords[0][1]); // Close the polygon
         graphics.fillPath();
 
+        // Draw the pole
         [l, r, t, b] = [-poleWidth / 2, poleWidth / 2, -(poleLen - poleWidth / 2), -poleWidth / 2]
-
-        // Initialize the cartesian coordinates
         let poleCoords = [
             [l, b], // Bottom-left
             [l, t], // Top-left
@@ -234,10 +247,7 @@ class CartPoleScene extends Phaser.Scene {
             [r, b]  // Bottom-right
         ];
 
-        // Update the poleCoords with the new coordinates
         poleCoords = poleCoords.map((c) => {
-            // const vector = new Vector2(c[0], c[1]).rotateRad(theta);
-            // let newCoord = c;
             const cos = Math.cos(theta);
             const sin = Math.sin(theta);
             const newCoord = [
@@ -247,24 +257,18 @@ class CartPoleScene extends Phaser.Scene {
             return newCoord
         });
 
-        // Begin drawing the polygon
+        // Draw the pole
         graphics.fillStyle(0xca9895);
         graphics.beginPath();
         graphics.moveTo(poleCoords[0][0], poleCoords[0][1]);
-
-        // Loop through the coordinates to create the polygon
         for (let i = 1; i < 4; i++) {
             graphics.lineTo(poleCoords[i][0], poleCoords[i][1]);
         }
-
-        // Close the path and fill the polygon
         graphics.lineTo(poleCoords[0][0], poleCoords[0][1]); // Close the polygon
         graphics.fillPath();
 
-        // Set the fill style (color and alpha)
-        graphics.fillStyle(0x8184cb, 1); // Red color with full opacity
-
-        // Draw a circle at (400, 300) with a radius of 100
+        // Draw the circle inside the cart
+        graphics.fillStyle(0x8184cb, 1);
         graphics.fillCircle(cartX, cartY + axleOffset, poleWidth / 2);
     }
 }
