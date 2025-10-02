@@ -1,9 +1,11 @@
 ## Gymjs prototype
 
 ### Spaces
+
 https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/spaces/space.py
 
 Class space in general is like:
+
 ```py
 class Space:
     def __init__(self, shape, dtype, seed):
@@ -22,27 +24,29 @@ class Space:
 
 Proposed Typescript equivalent:
 gymnasium/spaces/space.ts
+
 ```ts
 // Corresponding to types that tensowflow js supports
 
 abstract class Space {
-    public shape: number[]; // Array of integers
-    public dtype: tf.DataType;
-    
-    constructor(shape: number[], dtype: tf.DataType) {
-        this._shape = shape;
-        this.dtype = dtype;
-    }
+  public shape: number[]; // Array of integers
+  public dtype: tf.DataType;
 
-    abstract sample(): tf.Tensor | number;
+  constructor(shape: number[], dtype: tf.DataType) {
+    this._shape = shape;
+    this.dtype = dtype;
+  }
+
+  abstract sample(): tf.Tensor | number;
 }
 ```
 
-
 ### Box
+
 https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/spaces/box.py
 
 Class box in general is like:
+
 ```py
 class Box(Space):
     def __init__(self, low, high, shape, dtype, seed):
@@ -53,6 +57,7 @@ class Box(Space):
 
     # Alongside some methods which we don't need yet
 ```
+
 - `low` is the lowest possible value
 - `high` is the highest possible value
 - `shape` and `type` are the same thing as space.
@@ -66,11 +71,12 @@ The reason we need this information is so that we know what type of data/dimensi
 
 Proposed Typescript equivalent:
 gymnasium/spaces/box.ts
+
 ```ts
 class Box extends Space {
     private low: number;
     private high: number;
-    
+
     constructor(low: number, high: number, shape: number[], dtype: tf.DataType) {
         super(shape, dtype)
         this.low = low;
@@ -83,11 +89,12 @@ class Box extends Space {
 }
 ```
 
-
 ### Discrete
+
 https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/spaces/discrete.py
 
 Class Discrete in general is like:
+
 ```py
 class Space:
     def __init__(self, n, seed, start):
@@ -109,11 +116,12 @@ Proposed Typescript equivalent:
 gymnasium/spaces/discrete
 
 .ts
+
 ```ts
 class Discrete extends Space {
     public n: number;
     public start: number;
-    
+
     constructor(n: number, start: number = 0) {
         super(shape: [], dtype: "int32")
         this.n = n;
@@ -127,6 +135,7 @@ class Discrete extends Space {
 ```
 
 ### ObsSpace and ActSpace
+
 It's important to distinguish between spaces that are observations and spaces that are actions when defining an environment. We simply define a type for actions spaces and observations spaces:
 
 ```ts
@@ -134,8 +143,8 @@ type ActSpace = Discrete | ... // Other types that we might add later
 type ObsSpace = Box | ... // Other types that we might add later
 ```
 
-
 ### Env
+
 https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/core.py:
 
 ```py
@@ -149,7 +158,7 @@ class Env: # Abstract class
     def close()
 ```
 
-- `render_mode` is how we choose to render or not render at all, commonly "human" and "rgb_array". "human" mean rendering the game and in 60 fps while "rgb_array" means not rendering at all. "human" is used in testing and "rgb_array" is used in training 
+- `render_mode` is how we choose to render or not render at all, commonly "human" and "rgb_array". "human" mean rendering the game and in 60 fps while "rgb_array" means not rendering at all. "human" is used in testing and "rgb_array" is used in training
 - `action_space` is the type of action space
 - `observation_space` is the type of observation space
 - `reset` is a method that sets the game to the beginning, returns the observation and info.
@@ -159,28 +168,33 @@ class Env: # Abstract class
 Proposed Typescript equivalent:
 
 gymnasium/core.ts
+
 ```ts
 abstract class Env {
-    protected renderMode: str;
-    public actionSpace: ActSpace;
-    public observationSpace: ObsSpace;
+  protected renderMode: str;
+  public actionSpace: ActSpace;
+  public observationSpace: ObsSpace;
 
-    abstract reset(): [tf.Tensor, {}];
-    abstract async step(action: number): [tf.Tensor, number, boolean, boolean, {}]; // Action is number for now
-    abstract async render(): void;
-    abstract close(): void;
+  abstract reset(): [tf.Tensor, {}];
+  abstract async step(
+    action: number
+  ): [tf.Tensor, number, boolean, boolean, {}]; // Action is number for now
+  abstract async render(): void;
+  abstract close(): void;
 }
 ```
 
 ### CartPole Env
+
 https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/classic_control/cartpole.py
 
 Class CartPoleEnv in general is like:
+
 ```py
 class CartPoleEnv(gym.Env):
     def __init__(self, sutton_barto_reward, render_mode):
         ...
-    
+
     def step():
         ...
 
@@ -199,6 +213,7 @@ It basically an implementation of the abstract class `gym.Env`.
 Proposed Typescript equivalent:
 
 gymnasium/envs/classic_control/cartpole.ts
+
 ```ts
 class CartPoleEnv extends Env {
     private suttonBartoReward: boolean;
@@ -229,7 +244,6 @@ class CartPoleEnv extends Env {
     }
 }
 ```
-
 
 ### References:
 
