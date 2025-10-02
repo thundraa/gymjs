@@ -9,5 +9,5 @@ export default defineConfig({
   minify: {
     compress: true,
     mangle: true,
-  }
+  },
 });
