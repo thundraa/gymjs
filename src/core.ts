@@ -9,7 +9,7 @@ type ObsSpace = Box;
 export type InfoType<T> = Record<string, T>;
 
 export abstract class Env<T> {
-  protected renderMode: string;
+  protected renderMode: string | null;
   public actionSpace: ActSpace;
   public observationSpace: ObsSpace;
 
