@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
+  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@types/node": "^24.3.3",
     "prettier": "^3.6.2",
+    "tsdown": "^0.15.6",
     "typescript": "^5.9.2"
   },
   "dependencies": {
