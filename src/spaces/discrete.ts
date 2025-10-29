@@ -17,9 +17,9 @@ export class Discrete extends Space {
   }
   /**
    * Gets a sample of the discrete space.
-   * 
+   *
    * @returns a random integer in the space range
-   * 
+   *
    * @override
    */
   sample(): number {

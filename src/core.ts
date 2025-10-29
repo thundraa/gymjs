@@ -46,7 +46,7 @@ export abstract class Env<T> {
   ): Promise<[tf.Tensor, number, boolean, boolean, InfoType<T> | null]>;
   /**
    * Renders the environment graphically.
-   * 
+   *
    * @returns Either no return or an array of the screen of the environment
    */
   abstract render(): Promise<void | tf.Tensor>;

@@ -18,9 +18,9 @@ export class Box extends Space {
 
   /**
    * Gets a sample of the box space.
-   * 
+   *
    * @returns a random tensor in the space range
-   * 
+   *
    * @override
    */
   sample(): tf.Tensor {
