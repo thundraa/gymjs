@@ -1,10 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 
-import { Discrete } from './spaces/discrete';
-import { Box } from './spaces/box';
-
-type ActSpace = Discrete;
-type ObsSpace = Box;
+import { Space } from './spaces/space';
 
 export type InfoType<T> = Record<string, T>;
 
@@ -15,13 +11,13 @@ export abstract class Env<T> {
   /** The render mode of the environment */
   protected renderMode: string | null;
   /** The action space of the environment */
-  public actionSpace: ActSpace;
+  public actionSpace: Space;
   /** The observation space of the environment */
-  public observationSpace: ObsSpace;
+  public observationSpace: Space;
 
   constructor(
-    actionSpace: ActSpace,
-    observationSpace: ObsSpace,
+    actionSpace: Space,
+    observationSpace: Space,
     renderMode: string | null
   ) {
     this.actionSpace = actionSpace;
