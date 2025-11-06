@@ -1,7 +1,7 @@
 {
   "name": "gymjs",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "An API standard for single-agent reinforcement learning environments",
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
@@ -26,8 +26,15 @@
       "default": "./dist/envs/classic_control/index.js"
     }
   },
-  "keywords": [],
-  "author": "",
+  "files": [
+    "dist/**"
+  ],
+  "repository": "thundraa/gymjs",
+  "keywords": [
+    "rl",
+    "gym",
+    "reinforcement learning"
+  ],
   "license": "MIT",
   "packageManager": "pnpm@10.7.0",
   "devDependencies": {

@@ -4,9 +4,15 @@ import { Space } from './spaces/space';
 
 export type InfoType<T> = Record<string, T>;
 
+/**
+ * An abstract class that represents the structure of an environment.
+ */
 export abstract class Env<T> {
+  /** The render mode of the environment */
   protected renderMode: string | null;
+  /** The action space of the environment */
   public actionSpace: Space;
+  /** The observation space of the environment */
   public observationSpace: Space;
 
   constructor(
@@ -19,10 +25,29 @@ export abstract class Env<T> {
     this.renderMode = renderMode;
   }
 
+  /**
+   * Resets the environment.
+   *
+   * @returns An array of the observation of the initial state and info
+   */
   abstract reset(): [tf.Tensor, InfoType<T> | null];
+  /**
+   * Takes one step in the environment
+   *
+   * @param action - action to take in the environment
+   * @returns A tuple of the observation of the initial state, reward, termination, truncation and info
+   */
   abstract step(
     action: tf.Tensor | number
-  ): Promise<[tf.Tensor, number, boolean, boolean, InfoType<T> | null]>; // Action is number for now
+  ): Promise<[tf.Tensor, number, boolean, boolean, InfoType<T> | null]>;
+  /**
+   * Renders the environment graphically.
+   *
+   * @returns Either no return or an array of the screen of the environment
+   */
   abstract render(): Promise<void | tf.Tensor>;
+  /**
+   * Closes the environment.
+   */
   abstract close(): void;
 }
