@@ -36,6 +36,7 @@ export class CartPoleEnv extends Env<null> {
 
   /**
    * Creates an instance of CartPoleEnv.
+   *
    * @param suttonBartoReward - If `True` the reward function matches the original sutton barto implementation
    * @param renderMode - Specify the render mode, null means no rendering and "human" means rendering on a canvas.
    * @param canvas - Specify which canvas for phaser to render into.
@@ -62,7 +63,9 @@ export class CartPoleEnv extends Env<null> {
 
   /**
    * Resets the environment.
+   *
    * @param suttonBartoReward - If `True` the reward function matches the original sutton barto implementation
+   *
    * @returns a tuple of observation (type float32 and shape [4]) and info (null)
    */
   reset(): [tf.Tensor, null] {
@@ -80,7 +83,9 @@ export class CartPoleEnv extends Env<null> {
 
   /**
    * Takes one step in the environment.
+   *
    * @param action - The action chosen, 0 means push to the left and 1 means push to the right
+   *
    * @returns A tuple of observation (type float32 and shape [4]), reward, terminated, truncated and info (null)
    */
   async step(
