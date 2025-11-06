@@ -1,3 +1,9 @@
 // Core
-import { Env } from './core';
-export { Env };
+import {
+  Env,
+  Wrapper,
+  ObservationWrapper,
+  ActionWrapper,
+  RewardWrapper,
+} from './core';
+export { Env, Wrapper, ObservationWrapper, ActionWrapper, RewardWrapper };
