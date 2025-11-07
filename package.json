@@ -24,6 +24,10 @@
     "./envs/classic_control": {
       "types": "./dist/envs/classic_control/index.d.ts",
       "default": "./dist/envs/classic_control/index.js"
+    },
+    "./envs/classic_control_web": {
+      "types": "./dist/envs/classic_control_web/index.d.ts",
+      "default": "./dist/envs/classic_control_web/index.js"
     }
   },
   "files": [
