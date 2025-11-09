@@ -26,7 +26,7 @@ export class CartPoleEnv extends CartPoleEnvOrg {
    */
   constructor(
     suttonBartoReward: boolean = false,
-    renderMode: "human" | null = null,
+    renderMode: 'human' | null = null,
     canvas: HTMLCanvasElement | null = null
   ) {
     super(suttonBartoReward);
