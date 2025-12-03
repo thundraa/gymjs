@@ -1,5 +1,17 @@
 import * as tf from '@tensorflow/tfjs';
 
+import type { Canvas } from '@napi-rs/canvas';
+import type { Sdl } from '@kmamal/sdl';
+
+let sdl: typeof import('@kmamal/sdl') | undefined = undefined;
+let createCanvas: typeof import('@napi-rs/canvas').createCanvas | undefined =
+  undefined;
+
+if (typeof process !== 'undefined') {
+  sdl = require('@kmamal/sdl');
+  createCanvas = require('@napi-rs/canvas').createCanvas;
+}
+
 import { Discrete } from '../../spaces/discrete';
 import { Box } from '../../spaces/box';
 import { Env } from '../../core';
@@ -29,14 +41,24 @@ export class CartPoleEnv extends Env {
 
   // Per-instance variables
   private readonly suttonBartoReward: boolean;
-  private state: [number, number, number, number] | null;
+  protected state: [number, number, number, number] | null;
+
+  // Instance variables related to rendering
+  private canvas: HTMLCanvasElement | Canvas | null;
+  private window: Sdl.Video.Window | undefined;
 
   /**
    * Creates an instance of CartPoleEnv.
    *
    * @param suttonBartoReward - If `True` the reward function matches the original sutton barto implementation
+   * @param renderMode - Specify the render mode, null means no rendering and "human" means rendering on a canvas.
+   * @param canvas - Specify which canvas to render on, must be specified on web if the rendering mode is human
    */
-  constructor(suttonBartoReward: boolean = false) {
+  constructor(
+    suttonBartoReward: boolean = false,
+    renderMode: 'human' | null = null,
+    canvas: HTMLCanvasElement | null = null
+  ) {
     let actionSpace = new Discrete(2);
 
     const high = tf.tensor([
@@ -51,6 +73,31 @@ export class CartPoleEnv extends Env {
     super(actionSpace, observationSpace, null);
     this.suttonBartoReward = suttonBartoReward;
     this.state = null;
+    this.canvas = canvas;
+    this.window = undefined;
+    this.renderMode = renderMode;
+
+    if (this.renderMode === 'human') {
+      const isNode = typeof process === 'object';
+      if (!isNode && canvas === null) {
+        throw Error('Canvas must be provied in human rendering mode!');
+      }
+
+      if (isNode) {
+        this.window = sdl?.video.createWindow({
+          title: 'Cart Pole',
+          width: CartPoleEnv.screenWidth,
+          height: CartPoleEnv.screenHeight,
+        });
+        if (createCanvas !== undefined) {
+          this.canvas = createCanvas(
+            CartPoleEnv.screenWidth,
+            CartPoleEnv.screenHeight
+          );
+          console.log('lol2');
+        }
+      }
+    }
   }
 
   /**
@@ -146,6 +193,7 @@ export class CartPoleEnv extends Env {
     }
 
     if (this.renderMode === 'human') {
+      await this.render();
       await new Promise((resolve) =>
         setTimeout(resolve, 1000 / CartPoleEnv.frameRate)
       );
@@ -154,15 +202,133 @@ export class CartPoleEnv extends Env {
     return [tensorState, reward, terminated, false, null];
   }
 
+  /**
+   * Renders the environment on the canvas.
+   */
   async render(): Promise<void> {
-    return;
+    this.draw();
   }
 
+  /**
+   * Closes the window on Node JS
+   */
   close(): void {
-    return;
+    this.window?.destroy();
   }
 
-  getState(): [number, number, number, number] | null {
-    return this.state;
+  private draw(): void {
+    if (this.canvas === null) {
+      throw Error("Can't draw without a canvas!");
+    }
+
+    const ctx = this.canvas.getContext('2d');
+    if (ctx === null) {
+      throw Error('Context must not be bull!');
+    }
+
+    this.canvas.width = CartPoleEnv.screenWidth;
+    this.canvas.height = CartPoleEnv.screenHeight;
+
+    // Background color
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    if (this.state === null) {
+      return;
+    }
+
+    let worldWidth = CartPoleEnv.xThreshold * 2;
+    let scale = CartPoleEnv.screenWidth / worldWidth;
+    let poleWidth = 10.0;
+    let poleLen = scale * (2 * CartPoleEnv.poleLength);
+    let cartWidth = 50.0;
+    let cartHeight = 30.0;
+
+    let [x, _, theta, __] = this.state;
+
+    // Left, right, top, bottom
+    let [l, r, t, b] = [
+      -cartWidth / 2,
+      cartWidth / 2,
+      cartHeight / 2,
+      -cartHeight / 2,
+    ];
+
+    let axleOffset = cartHeight / 4.0;
+    let cartX = x * scale + CartPoleEnv.screenWidth / 2.0;
+    let cartY = CartPoleEnv.screenHeight - 100;
+
+    // Draw a horizontal line
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(0, cartY);
+    ctx.lineTo(CartPoleEnv.screenWidth, cartY);
+    ctx.stroke();
+
+    // Draw the cart
+    let cartCoords = [
+      [l, b], // Bottom-left
+      [l, t], // Top-left
+      [r, t], // Top-right
+      [r, b], // Bottom-right
+    ];
+
+    cartCoords = cartCoords.map((c) => [c[0] + cartX, c[1] + cartY]);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(cartCoords[0][0], cartCoords[0][1]);
+    for (let i = 1; i < 4; i++) {
+      ctx.lineTo(cartCoords[i][0], cartCoords[i][1]);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw the pole
+    [l, r, t, b] = [
+      -poleWidth / 2,
+      poleWidth / 2,
+      -(poleLen - poleWidth / 2),
+      -poleWidth / 2,
+    ];
+    let poleCoords = [
+      [l, b], // Bottom-left
+      [l, t], // Top-left
+      [r, t], // Top-right
+      [r, b], // Bottom-right
+    ];
+
+    poleCoords = poleCoords.map((c) => {
+      const cos = Math.cos(theta);
+      const sin = Math.sin(theta);
+      return [
+        c[0] * cos - c[1] * sin + cartX,
+        c[0] * sin + c[1] * cos + cartY + axleOffset,
+      ];
+    });
+
+    // Draw the pole
+    ctx.fillStyle = '#ca9895';
+    ctx.beginPath();
+    ctx.moveTo(poleCoords[0][0], poleCoords[0][1]);
+    for (let i = 1; i < 4; i++) {
+      ctx.lineTo(poleCoords[i][0], poleCoords[i][1]);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw the circle inside the cart
+    ctx.beginPath();
+    ctx.fillStyle = '#8184cb';
+    ctx.arc(cartX, cartY + axleOffset, poleWidth / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Render to window on node js
+    if (this.window !== undefined) {
+      const width = CartPoleEnv.screenWidth;
+      const height = CartPoleEnv.screenHeight;
+      const buffer = Buffer.from(ctx.getImageData(0, 0, width, height).data);
+      this.window.render(width, height, width * 4, 'rgba32', buffer);
+    }
   }
 }
