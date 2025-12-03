@@ -48,6 +48,8 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@kmamal/sdl": "^0.11.13",
+    "@napi-rs/canvas": "^0.1.83",
     "@tensorflow/tfjs": "^4.22.0"
   }
 }
