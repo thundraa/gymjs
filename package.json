@@ -48,7 +48,6 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^4.22.0",
-    "phaser": "^3.90.0"
+    "@tensorflow/tfjs": "^4.22.0"
   }
 }
