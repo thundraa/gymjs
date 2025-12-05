@@ -11,7 +11,7 @@ export class Discrete extends Space {
   public start: number;
 
   constructor(n: number, start: number = 0) {
-    super([], 'int32');
+    super([1], 'int32');
     this.n = n;
     this.start = start;
   }
