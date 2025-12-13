@@ -12,6 +12,8 @@ export abstract class Env {
   public actionSpace: Space;
   /** The observation space of the environment */
   public observationSpace: Space;
+  /** Environment's seed */
+  protected seed: number | undefined;
 
   constructor(
     actionSpace: Space,
@@ -21,14 +23,18 @@ export abstract class Env {
     this.actionSpace = actionSpace;
     this.observationSpace = observationSpace;
     this.renderMode = renderMode;
+    this.seed = undefined;
   }
 
   /**
    * Resets the environment.
    *
+   * @param seed - environment's seed, undefined means no seed.
    * @returns An array of the observation of the initial state and info
    */
-  abstract reset(): [tf.Tensor, Record<string, any> | null];
+  abstract reset(
+    seed: number | undefined
+  ): [tf.Tensor, Record<string, any> | null];
   /**
    * Takes one step in the environment
    *
@@ -72,12 +78,15 @@ export abstract class Wrapper {
   }
 
   /**
-   * Resets the wrapper
+   * Resets the wrapper.
    *
+   * @param seed - environment's seed, undefined means no seed.
    * @returns An array of the observation of the initial state and info
    */
-  reset(): [tf.Tensor, Record<string, any> | null] {
-    return this.env.reset();
+  reset(
+    seed: number | undefined = undefined
+  ): [tf.Tensor, Record<string, any> | null] {
+    return this.env.reset(seed);
   }
 
   /**
@@ -145,8 +154,16 @@ export abstract class ObservationWrapper extends Wrapper {
     super(env);
   }
 
-  reset(): [tf.Tensor, Record<string, any> | null] {
-    let [obs, info] = this.env.reset();
+  /**
+   * Resets the wrapper.
+   *
+   * @param seed - environment's seed, undefined means no seed.
+   * @returns An array of the observation of the initial state and info
+   */
+  reset(
+    seed: number | undefined = undefined
+  ): [tf.Tensor, Record<string, any> | null] {
+    let [obs, info] = this.env.reset(seed);
     return [this.observarionTransform(obs), info];
   }
 

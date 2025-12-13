@@ -14,9 +14,10 @@ export class Box extends Space {
     low: tf.Tensor | number,
     high: tf.Tensor | number,
     shape: number[],
-    dtype: tf.DataType
+    dtype: tf.DataType,
+    seed: number | undefined = undefined
   ) {
-    super(shape, dtype);
+    super(shape, dtype, seed);
 
     if (typeof low !== typeof high) {
       throw new Error('Low and high should be of the same type!');
@@ -44,7 +45,13 @@ export class Box extends Space {
    */
   sample(): tf.Tensor {
     if (typeof this.low === 'number' && typeof this.high === 'number') {
-      return tf.randomUniform(this.shape, this.low, this.high, this.dtype);
+      return tf.randomUniform(
+        this.shape,
+        this.low,
+        this.high,
+        this.dtype,
+        this.seed
+      );
     } else if (
       this.low instanceof tf.Tensor &&
       this.high instanceof tf.Tensor
@@ -77,21 +84,27 @@ export class Box extends Space {
 
         sample = tf.where(
           unbounded,
-          tf.randomNormal(this.shape, 0, 1, 'float32'),
+          tf.randomNormal(this.shape, 0, 1, 'float32', this.seed),
           sample
         );
 
-        let boundedTensor = tf.randomUniform(this.shape, 0, 1, 'float32');
+        let boundedTensor = tf.randomUniform(
+          this.shape,
+          0,
+          1,
+          'float32',
+          this.seed
+        );
         boundedTensor.print();
         boundedTensor = boundedTensor.mul(high.sub(low));
         boundedTensor = boundedTensor.add(low);
         sample = tf.where(bounded, boundedTensor, sample);
 
-        let unboundedBelowTensor = randomExponential(this.shape);
+        let unboundedBelowTensor = randomExponential(this.shape, this.seed);
         unboundedBelowTensor = unboundedBelowTensor.add(low);
         sample = tf.where(boundedBelowOnly, unboundedBelowTensor, sample);
 
-        let unboundedAboveTensor = randomExponential(this.shape);
+        let unboundedAboveTensor = randomExponential(this.shape, this.seed);
         unboundedAboveTensor = tf.neg(unboundedAboveTensor).add(high);
         sample = tf.where(boundedAboveOnly, unboundedAboveTensor, sample);
 
@@ -125,8 +138,11 @@ export class Box extends Space {
   }
 }
 
-function randomExponential(shape: number[]) {
-  let randomTensor = tf.randomUniform(shape, 0, 1, 'float32');
+function randomExponential(
+  shape: number[],
+  seed: number | undefined = undefined
+) {
+  let randomTensor = tf.randomUniform(shape, 0, 1, 'float32', seed);
   randomTensor = tf.neg(tf.log(randomTensor));
   return randomTensor;
 }
