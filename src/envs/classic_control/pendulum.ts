@@ -208,14 +208,11 @@ export class PendulumEnv extends Env {
     }
 
     this.canvas.width = PendulumEnv.screenDim;
-    this.canvas.height = PendulumEnv.screenDim;
+    this.canvas.height = PendulumEnv.screenDim;-
 
-    // --- Prepare drawing space (equivalent to self.surf) -----------------------
-
-    ctx.save(); // isolate drawing space
+    ctx.save();
     ctx.clearRect(0, 0, PendulumEnv.screenDim, PendulumEnv.screenDim);
 
-    // Pygame filled white background
     ctx.fillStyle = 'rgb(0,0,0)';
     ctx.fillRect(0, 0, PendulumEnv.screenDim, PendulumEnv.screenDim);
 
@@ -293,7 +290,7 @@ export class PendulumEnv extends Env {
 
     if (this.lastU !== null) {
       // Arrow size proportional to |u|
-      const arrowSize = (scale * Math.abs(this.lastU)) / 2;
+      const arrowSize = (scale * Math.abs(this.lastU)) / 4 + 15;
 
       ctx.save();
       ctx.translate(offset, offset);
@@ -331,30 +328,6 @@ export class PendulumEnv extends Env {
 
       ctx.restore();
     }
-
-    // if (this.lastU !== null) {
-    //   const imgSize = (scale * Math.abs(this.lastU)) / 2;
-
-    //   ctx.save();
-
-    //   // Center transform
-    //   ctx.translate(offset, offset);
-
-    //   // Flip horizontally if this.lastU > 0
-    //   if (this.lastU > 0) ctx.scale(-1, 1);
-
-    //   // Draw centered
-    //   // @ts-ignore
-    //   // ctx.drawImage(
-    //   //     clockwiseImg,
-    //   //     -imgSize / 2,
-    //   //     -imgSize / 2,
-    //   //     imgSize,
-    //   //     imgSize
-    //   // );
-
-    //   ctx.restore();
-    // }
 
     // --- Axle (black center) ----------------------------------------------------
 
