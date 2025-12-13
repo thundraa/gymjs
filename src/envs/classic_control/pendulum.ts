@@ -208,7 +208,7 @@ export class PendulumEnv extends Env {
     }
 
     this.canvas.width = PendulumEnv.screenDim;
-    this.canvas.height = PendulumEnv.screenDim;-
+    this.canvas.height = PendulumEnv.screenDim;
 
     ctx.save();
     ctx.clearRect(0, 0, PendulumEnv.screenDim, PendulumEnv.screenDim);

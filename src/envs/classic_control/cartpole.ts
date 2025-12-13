@@ -94,7 +94,6 @@ export class CartPoleEnv extends Env {
             CartPoleEnv.screenWidth,
             CartPoleEnv.screenHeight
           );
-          console.log('lol2');
         }
       }
     }
@@ -102,8 +101,6 @@ export class CartPoleEnv extends Env {
 
   /**
    * Resets the environment.
-   *
-   * @param suttonBartoReward - If `True` the reward function matches the original sutton barto implementation
    *
    * @returns a tuple of observation (type float32 and shape [4]) and info (null)
    */
