@@ -131,6 +131,10 @@ export class PendulumEnv extends Env {
     // https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/classic_control/pendulum.py
     // I have no idea how it works.
 
+    if (!this.actionSpace.contains(action)) {
+      throw Error(`Action invalid`);
+    }
+
     let [theta, thetaDot] = this.state;
 
     action = tf.clipByValue(

@@ -135,6 +135,10 @@ export class CartPoleEnv extends Env {
     // https://github.com/sheilaschoepp/gymnasium/blob/main/gymnasium/envs/classic_control/cartpole.py
     // I have no idea how it works.
 
+    if (!this.actionSpace.contains(action)) {
+      throw Error(`Action invalid`);
+    }
+
     let [x, xDot, theta, thetaDot] = this.state;
     let force = action - 0.5 > 0 ? CartPoleEnv.forceMag : -CartPoleEnv.forceMag;
     const costheta = Math.cos(theta);
