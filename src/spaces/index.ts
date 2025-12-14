@@ -1,4 +1,5 @@
 import { Space } from './space';
 import { Discrete } from './discrete';
 import { Box } from './box';
-export { Space, Discrete, Box };
+import { MultiDiscrete } from './multidiscrete';
+export { Space, Discrete, Box, MultiDiscrete };
