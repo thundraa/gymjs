@@ -123,7 +123,18 @@ export class Box extends Space {
    * @override
    */
   contains(x: tf.Tensor): boolean {
+    // Same type
     if (!(x instanceof tf.Tensor)) {
+      return false;
+    }
+
+    // Same shape
+    if (JSON.stringify(this.shape) !== JSON.stringify(x.shape)) {
+      return false;
+    }
+
+    // Same element type
+    if (x.dtype !== this.dtype) {
       return false;
     }
 
