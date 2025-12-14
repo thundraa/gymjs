@@ -10,7 +10,7 @@ export class Discrete extends Space {
   /** The smallest element of the space */
   public start: number;
 
-  constructor(n: number, start: number = 0, seed: number | null = null) {
+  constructor(n: number, start: number = 0, seed: number | undefined = undefined) {
     super([], 'int32', seed);
     this.n = n;
     this.start = start;
@@ -29,7 +29,7 @@ export class Discrete extends Space {
         [1],
         this.start,
         this.start + this.n,
-        5
+        this.seed
       );
       let [randomNumber] = randomNumTensor.dataSync();
 
