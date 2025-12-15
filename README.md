@@ -46,13 +46,13 @@ env.close();
 ```
 
 ## Environment Example
+
 An example implementation of an environment:
 
 ```ts
 import { Env } from 'gymjs';
 import { Box } from 'gymjs/spaces';
 import { TimeLimit } from 'gymjs/wrappers';
-
 
 class Walker extends Env {
   agent: tf.Tensor;
@@ -66,22 +66,29 @@ class Walker extends Env {
     this.goal = tf.tensor([0, 0]);
   }
 
-  reset(seed: number | undefined = undefined, options: Record<string, any> | null = null): [tf.Tensor, null] {
-    this.agent = tf.randomUniform([2], 0, 1, "float32");
-    this.goal = tf.randomUniform([2], 0, 1, "float32");
+  reset(
+    seed: number | undefined = undefined,
+    options: Record<string, any> | null = null
+  ): [tf.Tensor, null] {
+    this.agent = tf.randomUniform([2], 0, 1, 'float32');
+    this.goal = tf.randomUniform([2], 0, 1, 'float32');
     const obs = this.agent.concat(this.goal);
 
     return [obs, null];
   }
 
-  async step(action: tf.Tensor): Promise<[tf.Tensor, number, boolean, boolean, Record<string, any> | null]> {
-    if(!this.actionSpace.contains(action)) {
-        throw Error("Action not in action space.");
+  async step(
+    action: tf.Tensor
+  ): Promise<
+    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
+  > {
+    if (!this.actionSpace.contains(action)) {
+      throw Error('Action not in action space.');
     }
 
     this.agent = this.agent.add(action.mul(0.05));
     const obs = this.agent.concat(this.goal);
-    const distance = (this.agent.sub(this.goal)).norm().asScalar().dataSync()[0];
+    const distance = this.agent.sub(this.goal).norm().asScalar().dataSync()[0];
     const reward = -distance;
 
     let done = distance < 0.01;
