@@ -29,9 +29,36 @@ class ExampleEnv extends Env {
     }
 }
 
+describe('Test Env', () => {
+    const exampleEnv = new ExampleEnv();
+    it('Rendermode should be null', () => {
+        expect(exampleEnv.renderMode).toBe(null);
+    })
+})
+
 class ExampleWrapper extends Wrapper {
     constructor(env: Env | Wrapper) {
         super(env);
+    }
+
+    reset(seed?: number | undefined, options?: Record<string, any> | null): [tf.Tensor, Record<string, any> | null] {
+        return super.reset(seed, options);
+    }
+
+    async step(action: tf.Tensor | number): Promise<[tf.Tensor, number, boolean, boolean, Record<string, any> | null]> {
+        let [obs, reward, terminated, truncated, info] = await super.step(action);
+
+        return [obs, 3, terminated, truncated, info];
+    }
+}
+
+class ExampleWrapperDifferent extends Wrapper {
+    constructor(env: Env | Wrapper) {
+        super(env);
+        this._observationSpace = new Box(0, 2, [1], "float32");
+        this._actionSpace = new Box(0, 2, [1], "float32");
+        this._renderMode = "human";
+        
     }
 
     reset(seed?: number | undefined, options?: Record<string, any> | null): [tf.Tensor, Record<string, any> | null] {
@@ -49,7 +76,28 @@ class ExampleWrapper extends Wrapper {
 describe('Test Wrapper', () => {
     const exampleEnv = new ExampleEnv();
     const exampleWrapper = new ExampleWrapper(exampleEnv);
-    it('Should have the same observation', () => {
-        expect.assert(exampleEnv.observationSpace.dtype === exampleWrapper.observationSpace.dtype);
+    const exampleWrapperDifferent = new ExampleWrapperDifferent(exampleEnv);
+    it('Should have the same render mode', () => {
+        expect.assert(exampleEnv.renderMode === exampleWrapper.renderMode);
+    })
+
+    it('Should have the same observation space', () => {
+        expect.assert(exampleEnv.observationSpace.equals(exampleWrapper.observationSpace));
+    })
+
+    it('Should have the same action space', () => {
+        expect.assert(exampleEnv.actionSpace.equals(exampleWrapper.actionSpace));
+    })
+
+    it('Should have different render mode', () => {
+        expect.assert(!(exampleEnv.renderMode === exampleWrapperDifferent.renderMode));
+    })
+
+    it('Should have different observation space', () => {
+        expect.assert(!(exampleEnv.observationSpace.equals(exampleWrapperDifferent.observationSpace)));
+    })
+
+    it('Should have different action space', () => {
+        expect.assert(!(exampleEnv.actionSpace.equals(exampleWrapperDifferent.actionSpace)));
     })
 })

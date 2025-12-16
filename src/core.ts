@@ -77,7 +77,7 @@ export abstract class Wrapper {
   /** Substitute observation space */
   protected _observationSpace: Space | null;
   /** Substitute Rendermode */
-  private readonly _renderMode: string | null;
+  protected _renderMode: string | null;
 
   constructor(env: Env | Wrapper) {
     this.env = env;
