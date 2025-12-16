@@ -6,14 +6,14 @@ import { Space } from './spaces/space';
  * An abstract class that represents the structure of an environment.
  */
 export abstract class Env {
-  /** The render mode of the environment */
-  protected renderMode: string | null;
   /** The action space of the environment */
   public actionSpace: Space;
   /** The observation space of the environment */
   public observationSpace: Space;
   /** Environment's seed */
   protected seed: number | undefined;
+  /** The render mode of the environment */
+  private readonly _renderMode: string | null;
 
   constructor(
     actionSpace: Space,
@@ -22,7 +22,7 @@ export abstract class Env {
   ) {
     this.actionSpace = actionSpace;
     this.observationSpace = observationSpace;
-    this.renderMode = renderMode;
+    this._renderMode = renderMode;
     this.seed = undefined;
   }
 
@@ -59,6 +59,10 @@ export abstract class Env {
 
   get unwrapped(): Env {
     return this;
+  }
+
+  get renderMode(): string | null {
+    return this._renderMode;
   }
 }
 
