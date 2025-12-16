@@ -70,12 +70,11 @@ export class CartPoleEnv extends Env {
 
     let observationSpace = new Box(tf.neg(high), high, [4], 'float32');
 
-    super(actionSpace, observationSpace, null);
+    super(actionSpace, observationSpace, renderMode);
     this.suttonBartoReward = suttonBartoReward;
     this.state = null;
     this.canvas = canvas;
     this.window = undefined;
-    this.renderMode = renderMode;
 
     if (this.renderMode === 'human') {
       const isNode = typeof process === 'object';
