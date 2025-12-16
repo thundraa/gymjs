@@ -61,4 +61,17 @@ export class Discrete extends Space {
 
     return false;
   }
+
+  /**
+   * Determines if the two discrete are the same
+   *
+   * @returns A boolean that specifies if the two discrete are the same
+   */
+  equals(other: Discrete): boolean {
+    if (this.n === other.n && this.start === other.start) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

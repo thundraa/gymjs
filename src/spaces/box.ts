@@ -1,5 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 import { Space } from './space';
+import { checkTensors } from '../utils';
 
 /**
  * Box is the representation of the Cartesian product of n closed intervals
@@ -146,6 +147,38 @@ export class Box extends Space {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Determines if the two discrete are the same
+   *
+   * @returns A boolean that specifies if the two discrete are the same
+   */
+  equals(other: Box): boolean {
+    if (this.dtype !== other.dtype) {
+      return false;
+    } else if (JSON.stringify(this.shape) !== JSON.stringify(other.shape)) {
+      return false;
+    } else if (
+      typeof this.low === 'number' &&
+      typeof other.low === 'number' &&
+      typeof this.high === 'number' &&
+      typeof other.high === 'number'
+    ) {
+      return this.low === other.low && this.high === other.high;
+    } else if (
+      this.low instanceof tf.Tensor &&
+      other.low instanceof tf.Tensor &&
+      this.high instanceof tf.Tensor &&
+      other.high instanceof tf.Tensor
+    ) {
+      return (
+        checkTensors(this.low, other.low, true) &&
+        checkTensors(this.high, other.high, true)
+      );
+    } else {
+      return false;
+    }
   }
 }
 

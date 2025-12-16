@@ -6,14 +6,14 @@ import { Space } from './spaces/space';
  * An abstract class that represents the structure of an environment.
  */
 export abstract class Env {
-  /** The render mode of the environment */
-  protected renderMode: string | null;
   /** The action space of the environment */
   public actionSpace: Space;
   /** The observation space of the environment */
   public observationSpace: Space;
   /** Environment's seed */
   protected seed: number | undefined;
+  /** The render mode of the environment */
+  private readonly _renderMode: string | null;
 
   constructor(
     actionSpace: Space,
@@ -22,7 +22,7 @@ export abstract class Env {
   ) {
     this.actionSpace = actionSpace;
     this.observationSpace = observationSpace;
-    this.renderMode = renderMode;
+    this._renderMode = renderMode;
     this.seed = undefined;
   }
 
@@ -60,6 +60,10 @@ export abstract class Env {
   get unwrapped(): Env {
     return this;
   }
+
+  get renderMode(): string | null {
+    return this._renderMode;
+  }
 }
 
 /**
@@ -72,11 +76,14 @@ export abstract class Wrapper {
   protected _actionSpace: Space | null;
   /** Substitute observation space */
   protected _observationSpace: Space | null;
+  /** Substitute Rendermode */
+  private readonly _renderMode: string | null;
 
   constructor(env: Env | Wrapper) {
     this.env = env;
     this._actionSpace = null;
     this._observationSpace = null;
+    this._renderMode = null;
   }
 
   /**
@@ -147,6 +154,14 @@ export abstract class Wrapper {
    */
   get unwrapped(): Env | Wrapper {
     return this.env.unwrapped;
+  }
+
+  get renderMode(): string | null {
+    if (this._renderMode === null) {
+      return this.env.renderMode;
+    } else {
+      return this._renderMode;
+    }
   }
 }
 

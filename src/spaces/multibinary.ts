@@ -58,4 +58,19 @@ export class MultiBinary extends Space {
 
     return x.equal(1).logicalOr(x.equal(0)).all().dataSync()[0] === 1;
   }
+
+  /**
+   * Determines if the two multi binary are the same
+   *
+   * @returns A boolean that specifies if the two multi binary are the same
+   */
+  equals(other: MultiBinary): boolean {
+    if (typeof this.n === 'number' && typeof other.n === 'number') {
+      return this.n === other.n;
+    } else if (Array.isArray(this.n) && Array.isArray(other.n)) {
+      return JSON.stringify(this.n) === JSON.stringify(other.n);
+    } else {
+      return false;
+    }
+  }
 }

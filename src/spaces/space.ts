@@ -34,4 +34,11 @@ export abstract class Space {
    * @returns A boolean that specifies if the value is in the space
    */
   abstract contains(x: tf.Tensor | number): boolean;
+
+  /**
+   * Determines if the two spaces are the same
+   *
+   * @returns A boolean that specifies if the two spaces are the same
+   */
+  abstract equals(other: Space): boolean;
 }

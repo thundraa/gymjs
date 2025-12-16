@@ -1,5 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 import { Space } from './space';
+import { checkTensors } from '../utils';
 
 /**
  * MultiDiscrete is the representation of the Cartesian product of n discrete spaces
@@ -89,5 +90,21 @@ export class MultiDiscrete extends Space {
 
       return sameShape && biggerThanStart && lessThanMax;
     });
+  }
+
+  /**
+   * Determines if the two multi discrete are the same
+   *
+   * @returns A boolean that specifies if the two multi discrete are the same
+   */
+  equals(other: MultiDiscrete): boolean {
+    if (
+      checkTensors(this.nVec, other.nVec, true) &&
+      checkTensors(this.start, other.start, true)
+    ) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
