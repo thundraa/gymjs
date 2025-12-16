@@ -158,7 +158,7 @@ export abstract class Wrapper {
 
   get renderMode(): string | null {
     if (this._renderMode === null) {
-      return this.unwrapped.renderMode;
+      return this.env.renderMode;
     } else {
       return this._renderMode;
     }
