@@ -25,11 +25,11 @@ export class Box extends Space {
     }
 
     if (low instanceof tf.Tensor && high instanceof tf.Tensor) {
-      if (
-        JSON.stringify(low.shape) !== JSON.stringify(shape) ||
-        JSON.stringify(high.shape) !== JSON.stringify(shape)
-      ) {
-        throw new Error('Low and high should have the same shape as Box!');
+      if (JSON.stringify(low.shape) !== JSON.stringify(shape)) {
+        throw new Error('Low should have the same shape as Box!');
+      }
+      if (JSON.stringify(high.shape) !== JSON.stringify(shape)) {
+        throw new Error('High should have the same shape as Box!');
       }
     }
 
