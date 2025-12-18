@@ -15,6 +15,9 @@ export class Discrete extends Space {
     start: number = 0,
     seed: number | undefined = undefined
   ) {
+    if (n <= 0) {
+      throw new Error('The nummber of discrete elements must be positive!');
+    }
     super([], 'int32', seed);
     this.n = n;
     this.start = start;

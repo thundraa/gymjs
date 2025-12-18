@@ -22,14 +22,19 @@ export class Box extends Space {
 
     if (typeof low !== typeof high) {
       throw new Error('Low and high should be of the same type!');
-    }
-
-    if (low instanceof tf.Tensor && high instanceof tf.Tensor) {
-      if (
-        JSON.stringify(low.shape) !== JSON.stringify(shape) ||
-        JSON.stringify(high.shape) !== JSON.stringify(shape)
-      ) {
-        throw new Error('Low and high should have the same shape as Box!');
+    } else if (low instanceof tf.Tensor && high instanceof tf.Tensor) {
+      if (JSON.stringify(low.shape) !== JSON.stringify(shape)) {
+        throw new Error('Low should have the same shape as Box!');
+      }
+      if (JSON.stringify(high.shape) !== JSON.stringify(shape)) {
+        throw new Error('High should have the same shape as Box!');
+      }
+      if (high.less(low).any().dataSync()[0]) {
+        throw new Error('Not all values in high are higher than low!');
+      }
+    } else if (typeof low === 'number' && typeof high === 'number') {
+      if (high < low) {
+        throw new Error('High is lower than low!');
       }
     }
 
