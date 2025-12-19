@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 
-import { Env, Wrapper } from '../core';
+import { Env, Wrapper, ActType, ObsType } from '../core';
 
 /**
  * A wrapper that places a step limit on the environment
@@ -21,9 +21,7 @@ export class TimeLimit extends Wrapper {
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
-  reset(
-    options?: Record<string, any>
-  ): [tf.Tensor, Record<string, any> | null] {
+  reset(options?: Record<string, any>): [ObsType, Record<string, any> | null] {
     this.elapsedSteps = 0;
     return super.reset(options);
   }
@@ -35,10 +33,8 @@ export class TimeLimit extends Wrapper {
    * @returns A tuple of the observation of the initial state, reward, termination, truncation and info
    */
   async step(
-    action: tf.Tensor | number
-  ): Promise<
-    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
-  > {
+    action: ActType
+  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
     let [obs, reward, terminated, truncated, info] =
       await this.env.step(action);
     this.elapsedSteps += 1;
@@ -68,9 +64,7 @@ export class Autoreset extends Wrapper {
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
-  reset(
-    options?: Record<string, any>
-  ): [tf.Tensor, Record<string, any> | null] {
+  reset(options?: Record<string, any>): [ObsType, Record<string, any> | null] {
     this.autoReset = false;
     return super.reset(options);
   }
@@ -82,10 +76,8 @@ export class Autoreset extends Wrapper {
    * @returns A tuple of the observation of the initial state, reward, termination, truncation and info
    */
   async step(
-    action: tf.Tensor | number
-  ): Promise<
-    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
-  > {
+    action: ActType
+  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
     let obs: tf.Tensor;
     let reward: number;
     let terminated: boolean;

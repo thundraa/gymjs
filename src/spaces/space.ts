@@ -1,4 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
+import { ObsType, ActType } from '../core';
 
 /**
  * An abstract class that represents the structure of a space.
@@ -19,7 +20,7 @@ export abstract class Space {
    *
    * @returns A tensor or number that is acceptable in the space
    */
-  abstract sample(): tf.Tensor | number;
+  abstract sample(): ObsType | ActType;
 
   /**
    * Determines whether a value is in the space or not

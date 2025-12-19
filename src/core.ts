@@ -2,6 +2,9 @@ import * as tf from '@tensorflow/tfjs';
 
 import { Space } from './spaces/space';
 
+export type ActType = number | tf.Tensor;
+export type ObsType = tf.Tensor;
+
 /**
  * An abstract class that represents the structure of an environment.
  */
@@ -31,7 +34,7 @@ export abstract class Env {
    */
   abstract reset(
     options?: Record<string, any>
-  ): [tf.Tensor, Record<string, any> | null];
+  ): [ObsType, Record<string, any> | null];
   /**
    * Takes one step in the environment
    *
@@ -39,8 +42,8 @@ export abstract class Env {
    * @returns A tuple of the observation of the initial state, reward, termination, truncation and info
    */
   abstract step(
-    action: tf.Tensor | number
-  ): Promise<[tf.Tensor, number, boolean, boolean, Record<string, any> | null]>;
+    action: ActType
+  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]>;
   /**
    * Renders the environment graphically.
    *
@@ -87,9 +90,7 @@ export abstract class Wrapper {
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
-  reset(
-    options?: Record<string, any>
-  ): [tf.Tensor, Record<string, any> | null] {
+  reset(options?: Record<string, any>): [ObsType, Record<string, any> | null] {
     return this.env.reset(options);
   }
 
@@ -100,10 +101,8 @@ export abstract class Wrapper {
    * @returns A tuple of the observation of the initial state, reward, termination, truncation and info
    */
   async step(
-    action: tf.Tensor | number
-  ): Promise<
-    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
-  > {
+    action: ActType
+  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
     return this.env.step(action);
   }
 
@@ -185,18 +184,14 @@ export abstract class ObservationWrapper extends Wrapper {
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
-  reset(
-    options?: Record<string, any>
-  ): [tf.Tensor, Record<string, any> | null] {
+  reset(options?: Record<string, any>): [ObsType, Record<string, any> | null] {
     let [obs, info] = this.env.reset(options);
     return [this.observarionTransform(obs), info];
   }
 
   async step(
-    action: tf.Tensor | number
-  ): Promise<
-    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
-  > {
+    action: ActType
+  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
     let [obs, reward, terminated, truncated, info] =
       await this.env.step(action);
     return [
@@ -225,10 +220,8 @@ export abstract class RewardWrapper extends Wrapper {
   }
 
   async step(
-    action: tf.Tensor | number
-  ): Promise<
-    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
-  > {
+    action: ActType
+  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
     let [obs, reward, terminated, truncated, info] =
       await this.env.step(action);
     return [obs, this.rewardTransform(reward), terminated, truncated, info];
@@ -251,10 +244,8 @@ export abstract class ActionWrapper extends Wrapper {
   }
 
   async step(
-    action: tf.Tensor | number
-  ): Promise<
-    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
-  > {
+    action: ActType
+  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
     action = this.actionTransform(action);
     let [obs, reward, terminated, truncated, info] =
       await this.env.step(action);
@@ -266,5 +257,5 @@ export abstract class ActionWrapper extends Wrapper {
    * @param action - The original action to change
    * @returns the transformed action
    */
-  abstract actionTransform(action: tf.Tensor | number): tf.Tensor | number;
+  abstract actionTransform(action: ActType): ActType;
 }
