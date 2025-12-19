@@ -141,14 +141,27 @@ export abstract class Wrapper {
       return this._observationSpace;
     }
   }
-
+  /**
+   * Sets the action space
+   */
+  set actionSpace(space: Space) {
+    this._actionSpace = space;
+  }
+  /**
+   * Sets the observation space
+   */
+  set observationSpace(space: Space) {
+    this._observationSpace = space;
+  }
   /**
    * @returns the unwrapped environment
    */
   get unwrapped(): Env | Wrapper {
     return this.env.unwrapped;
   }
-
+  /**
+   * @returns the rendermode
+   */
   get renderMode(): string | null {
     if (this._renderMode === null) {
       return this.env.renderMode;
