@@ -78,8 +78,15 @@ export class CartPoleEnv extends Env {
 
     if (this.renderMode === 'human') {
       const isNode = typeof process === 'object';
+      const isMac = isNode && process.platform === 'darwin';
       if (!isNode && canvas === null) {
         throw Error('Canvas must be provied in human rendering mode!');
+      }
+
+      if (isMac) {
+        throw Error(
+          'Unfortunately SDL does not currently work on Mac OS! Disable human mode.'
+        );
       }
 
       if (isNode) {
