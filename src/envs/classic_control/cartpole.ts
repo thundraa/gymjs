@@ -104,7 +104,6 @@ export class CartPoleEnv extends Env {
    * @returns a tuple of observation (type float32 and shape [4]) and info (null)
    */
   reset(): [tf.Tensor, null] {
-
     let randomState = tf.randomUniform(
       this.observationSpace.shape,
       -0.05,
