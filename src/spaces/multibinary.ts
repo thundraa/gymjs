@@ -6,7 +6,7 @@ import { Space } from './space';
  */
 export class MultiBinary extends Space {
   n: number[] | number;
-  constructor(n: number[] | number, seed: number | undefined = undefined) {
+  constructor(n: number[] | number) {
     let inputN: number[];
     if (typeof n === 'number') {
       inputN = [n];
@@ -18,7 +18,7 @@ export class MultiBinary extends Space {
       throw Error('n (counts) have to be positive');
     }
 
-    super(inputN, 'int32', seed);
+    super(inputN, 'int32');
     this.n = n;
   }
 
@@ -30,7 +30,7 @@ export class MultiBinary extends Space {
    * @override
    */
   sample(): tf.Tensor {
-    return tf.randomUniformInt(this.shape, 0, 2, this.seed);
+    return tf.randomUniformInt(this.shape, 0, 2);
   }
 
   /**

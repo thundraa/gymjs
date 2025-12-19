@@ -10,8 +10,6 @@ export abstract class Env {
   public actionSpace: Space;
   /** The observation space of the environment */
   public observationSpace: Space;
-  /** Environment's seed */
-  protected seed: number | undefined;
   /** The render mode of the environment */
   private readonly _renderMode: string | null;
 
@@ -23,19 +21,16 @@ export abstract class Env {
     this.actionSpace = actionSpace;
     this.observationSpace = observationSpace;
     this._renderMode = renderMode;
-    this.seed = undefined;
   }
 
   /**
    * Resets the environment.
    *
-   * @param seed - environment's seed, undefined means no seed.
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
   abstract reset(
-    seed: number | undefined,
-    options: Record<string, any> | null
+    options?: Record<string, any>
   ): [tf.Tensor, Record<string, any> | null];
   /**
    * Takes one step in the environment
@@ -89,15 +84,13 @@ export abstract class Wrapper {
   /**
    * Resets the wrapper.
    *
-   * @param seed - environment's seed, undefined means no seed.
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
   reset(
-    seed: number | undefined = undefined,
-    options: Record<string, any> | null = null
+    options?: Record<string, any>
   ): [tf.Tensor, Record<string, any> | null] {
-    return this.env.reset(seed, options);
+    return this.env.reset(options);
   }
 
   /**
@@ -176,15 +169,13 @@ export abstract class ObservationWrapper extends Wrapper {
   /**
    * Resets the wrapper.
    *
-   * @param seed - environment's seed, undefined means no seed.
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
   reset(
-    seed: number | undefined = undefined,
-    options: Record<string, any> | null = null
+    options?: Record<string, any>
   ): [tf.Tensor, Record<string, any> | null] {
-    let [obs, info] = this.env.reset(seed, options);
+    let [obs, info] = this.env.reset(options);
     return [this.observarionTransform(obs), info];
   }
 

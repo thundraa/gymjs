@@ -18,16 +18,14 @@ export class TimeLimit extends Wrapper {
   /**
    * Resets the wrapper.
    *
-   * @param seed - environment's seed, undefined means no seed.
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
   reset(
-    seed: number | undefined = undefined,
-    options: Record<string, any> | null = null
+    options?: Record<string, any>
   ): [tf.Tensor, Record<string, any> | null] {
     this.elapsedSteps = 0;
-    return super.reset(seed, options);
+    return super.reset(options);
   }
 
   /**
@@ -67,16 +65,14 @@ export class Autoreset extends Wrapper {
   /**
    * Resets the wrapper.
    *
-   * @param seed - environment's seed, undefined means no seed.
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
   reset(
-    seed: number | undefined = undefined,
-    options: Record<string, any> | null = null
+    options?: Record<string, any>
   ): [tf.Tensor, Record<string, any> | null] {
     this.autoReset = false;
-    return super.reset(seed, options);
+    return super.reset(options);
   }
 
   /**
@@ -97,7 +93,7 @@ export class Autoreset extends Wrapper {
     let info: Record<string, any> | null;
 
     if (this.autoReset) {
-      [obs, info] = this.env.reset(undefined, null);
+      [obs, info] = this.env.reset();
       [reward, terminated, truncated] = [0.0, false, false];
     } else {
       [obs, reward, terminated, truncated, info] = await this.env.step(action);

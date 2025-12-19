@@ -13,8 +13,7 @@ class ExampleEnv extends Env {
   }
 
   reset(
-    seed: number | undefined,
-    options: Record<string, any> | null
+    options?: Record<string, any>
   ): [tf.Tensor, null] {
     return [tf.tensor([0]), null];
   }

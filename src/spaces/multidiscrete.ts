@@ -13,10 +13,9 @@ export class MultiDiscrete extends Space {
 
   constructor(
     nVec: tf.Tensor,
-    start: tf.Tensor | null = null,
-    seed: number | undefined = undefined
+    start: tf.Tensor | null = null
   ) {
-    super(nVec.shape, 'int32', seed);
+    super(nVec.shape, 'int32');
     this.nVec = nVec;
 
     if (this.nVec.dtype !== 'int32') {
@@ -49,7 +48,7 @@ export class MultiDiscrete extends Space {
   sample(): tf.Tensor {
     return tf.tidy(() => {
       // TODO: find a way without using randomUniform (which is float based)
-      let random = tf.randomUniform(this.shape, 0, 1, 'float32', this.seed);
+      let random = tf.randomUniform(this.shape, 0, 1, 'float32');
       random = random.mul(this.nVec).add(this.start);
 
       return random.floor().asType(this.dtype);

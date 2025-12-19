@@ -15,8 +15,7 @@ class ExampleEnv extends Env {
   }
 
   reset(
-    seed: number | undefined,
-    options: Record<string, any> | null
+    options?: Record<string, any>
   ): [tf.Tensor, Record<string, number>] {
     this.count = 0;
     return [tf.tensor([0]), { count: 0 }];

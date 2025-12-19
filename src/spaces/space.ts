@@ -9,16 +9,12 @@ export abstract class Space {
   /** The datatype of the space */
   public dtype: tf.DataType;
 
-  protected seed: number | undefined;
-
   constructor(
     shape: number[],
-    dtype: tf.DataType,
-    seed: number | undefined = undefined
+    dtype: tf.DataType
   ) {
     this.shape = shape;
     this.dtype = dtype;
-    this.seed = seed;
   }
 
   /**

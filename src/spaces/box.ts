@@ -15,10 +15,9 @@ export class Box extends Space {
     low: tf.Tensor | number,
     high: tf.Tensor | number,
     shape: number[],
-    dtype: tf.DataType,
-    seed: number | undefined = undefined
+    dtype: tf.DataType
   ) {
-    super(shape, dtype, seed);
+    super(shape, dtype);
 
     if (typeof low !== typeof high) {
       throw new Error('Low and high should be of the same type!');
@@ -55,8 +54,7 @@ export class Box extends Space {
         this.shape,
         this.low,
         this.high,
-        this.dtype,
-        this.seed
+        this.dtype
       );
     } else if (
       this.low instanceof tf.Tensor &&
@@ -90,7 +88,7 @@ export class Box extends Space {
 
         sample = tf.where(
           unbounded,
-          tf.randomNormal(this.shape, 0, 1, 'float32', this.seed),
+          tf.randomNormal(this.shape, 0, 1, 'float32'),
           sample
         );
 
@@ -98,19 +96,18 @@ export class Box extends Space {
           this.shape,
           0,
           1,
-          'float32',
-          this.seed
+          'float32'
         );
         boundedTensor.print();
         boundedTensor = boundedTensor.mul(high.sub(low));
         boundedTensor = boundedTensor.add(low);
         sample = tf.where(bounded, boundedTensor, sample);
 
-        let unboundedBelowTensor = randomExponential(this.shape, this.seed);
+        let unboundedBelowTensor = randomExponential(this.shape);
         unboundedBelowTensor = unboundedBelowTensor.add(low);
         sample = tf.where(boundedBelowOnly, unboundedBelowTensor, sample);
 
-        let unboundedAboveTensor = randomExponential(this.shape, this.seed);
+        let unboundedAboveTensor = randomExponential(this.shape);
         unboundedAboveTensor = tf.neg(unboundedAboveTensor).add(high);
         sample = tf.where(boundedAboveOnly, unboundedAboveTensor, sample);
 
@@ -188,10 +185,9 @@ export class Box extends Space {
 }
 
 function randomExponential(
-  shape: number[],
-  seed: number | undefined = undefined
+  shape: number[]
 ) {
-  let randomTensor = tf.randomUniform(shape, 0, 1, 'float32', seed);
+  let randomTensor = tf.randomUniform(shape, 0, 1, 'float32');
   randomTensor = tf.neg(tf.log(randomTensor));
   return randomTensor;
 }
