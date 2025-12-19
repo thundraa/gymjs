@@ -10,15 +10,11 @@ export class Discrete extends Space {
   /** The smallest element of the space */
   public start: number;
 
-  constructor(
-    n: number,
-    start: number = 0,
-    seed: number | undefined = undefined
-  ) {
+  constructor(n: number, start: number = 0) {
     if (n <= 0) {
       throw new Error('The nummber of discrete elements must be positive!');
     }
-    super([], 'int32', seed);
+    super([], 'int32');
     this.n = n;
     this.start = start;
   }
@@ -35,8 +31,7 @@ export class Discrete extends Space {
       let randomNumTensor = tf.randomUniformInt(
         [1],
         this.start,
-        this.start + this.n,
-        this.seed
+        this.start + this.n
       );
       let [randomNumber] = randomNumTensor.dataSync();
 

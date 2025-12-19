@@ -18,10 +18,7 @@ class ExampleEnv extends Env {
     super(actioSpace, observationSpace, null);
   }
 
-  reset(
-    seed: number | undefined,
-    options: Record<string, any> | null
-  ): [Tensor, null] {
+  reset(options?: Record<string, any>): [Tensor, null] {
     return [tf.tensor([0]), null];
   }
 
@@ -57,10 +54,9 @@ class ExampleWrapper extends Wrapper {
   }
 
   reset(
-    seed?: number | undefined,
-    options?: Record<string, any> | null
+    options?: Record<string, any>
   ): [tf.Tensor, Record<string, any> | null] {
-    return super.reset(seed, options);
+    return super.reset(options);
   }
 
   async step(
@@ -83,10 +79,9 @@ class ExampleWrapperDifferent extends Wrapper {
   }
 
   reset(
-    seed?: number | undefined,
-    options?: Record<string, any> | null
+    options?: Record<string, any>
   ): [tf.Tensor, Record<string, any> | null] {
-    return super.reset(seed, options);
+    return super.reset(options);
   }
 
   async step(
@@ -163,7 +158,7 @@ describe('Test Specific Wrappers', () => {
   const exampleObservationWrapper = new ExampleObservationWrapper(exampleEnv);
   const exampleActionWrapper = new ExampleActionWrapper(exampleEnv);
 
-  exampleEnv.reset(undefined, null);
+  exampleEnv.reset();
 
   it('Reward wrapper should change reward to 1', async () => {
     const [obs, reward, terminated, truncated, info] =
