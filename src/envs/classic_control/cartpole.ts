@@ -103,15 +103,12 @@ export class CartPoleEnv extends Env {
    *
    * @returns a tuple of observation (type float32 and shape [4]) and info (null)
    */
-  reset(seed: number | undefined = undefined): [tf.Tensor, null] {
-    this.seed = seed;
-
+  reset(): [tf.Tensor, null] {
     let randomState = tf.randomUniform(
       this.observationSpace.shape,
       -0.05,
       0.05,
-      this.observationSpace.dtype,
-      this.seed
+      this.observationSpace.dtype
     );
     let [x, xDot, theta, thetaDot] = randomState.dataSync();
     this.state = [x, xDot, theta, thetaDot];

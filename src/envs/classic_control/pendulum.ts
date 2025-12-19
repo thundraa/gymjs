@@ -98,13 +98,11 @@ export class PendulumEnv extends Env {
    *
    * @returns a tuple of observation (type float32 and shape [4]) and info (null)
    */
-  reset(seed: number | undefined = undefined): [tf.Tensor, null] {
-    this.seed = seed;
-
+  reset(): [tf.Tensor, null] {
     const high = tf.tensor([PendulumEnv.defaultX, PendulumEnv.defaulty]);
     const low = tf.neg(high);
 
-    const random = tf.randomUniform(high.shape, 0, 1, 'float32', this.seed);
+    const random = tf.randomUniform(high.shape, 0, 1, 'float32');
     const randomState = random.mul(high.sub(low)).add(low);
 
     let [theta, thetaDot] = randomState.dataSync();
