@@ -1,3 +1,3 @@
 // Core
-import { TimeLimit, Autoreset } from './common';
-export { TimeLimit, Autoreset };
+import { TimeLimit, Autoreset, OrderEnforcing } from './common';
+export { TimeLimit, Autoreset, OrderEnforcing };

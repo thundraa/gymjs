@@ -104,3 +104,68 @@ export class Autoreset extends Wrapper {
     return [obs, reward, terminated, truncated, info];
   }
 }
+
+/**
+ * A wrapper that enforcws thw correct order of the environment functions
+ */
+export class OrderEnforcing extends Wrapper {
+  private hasReset: boolean;
+  private disableRenderOrderEnforcing: boolean;
+
+  constructor(
+    env: Env | Wrapper,
+    disableRenderOrderEnforcing: boolean = false
+  ) {
+    super(env);
+    this.disableRenderOrderEnforcing = disableRenderOrderEnforcing;
+    this.hasReset = false;
+  }
+
+  /**
+   * Resets the wrapper.
+   *
+   * @param options - additional informatiom to specify how the environment resets
+   * @returns An array of the observation of the initial state and info
+   */
+  reset(
+    options?: Record<string, any>
+  ): [tf.Tensor, Record<string, any> | null] {
+    this.hasReset = true;
+    return super.reset(options);
+  }
+
+  /**
+   * Takes one step in the wrapper
+   *
+   * @param action - action to take in the environment
+   * @returns A tuple of the observation of the initial state, reward, termination, truncation and info
+   */
+  async step(
+    action: tf.Tensor | number
+  ): Promise<
+    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
+  > {
+    if (!this.hasReset) {
+      throw new Error('Cannot call env.step() before calling env.reset()');
+    }
+
+    return await this.env.step(action);
+  }
+
+  /**
+   * Renders the environment
+   */
+  async render(): Promise<void | tf.Tensor> {
+    if (!this.disableRenderOrderEnforcing && !this.hasReset) {
+      throw new Error(
+        'Cannot call env.render() before calling env.reset(), unset disableRenderOrderEnforcing if this is intended'
+      );
+    }
+
+    return await this.env.render();
+  }
+
+  get hasReseted() {
+    return this.hasReset;
+  }
+}
