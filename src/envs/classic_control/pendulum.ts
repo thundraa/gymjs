@@ -50,7 +50,7 @@ export class PendulumEnv extends Env {
    */
   constructor(
     g: number = 10.0,
-    renderMode: 'human' | null = null,
+    renderMode: 'human' | 'rgb_array' | null = null,
     canvas: HTMLCanvasElement | null = null
   ) {
     let actionSpace = new Box(
@@ -71,31 +71,32 @@ export class PendulumEnv extends Env {
     this.canvas = canvas;
     this.window = undefined;
 
-    if (this.renderMode === 'human') {
-      const isNode = typeof process === 'object';
+    const isNode = typeof process === 'object';
+    if (this.renderMode === 'human' || this.renderMode === 'rgb_array') {
       const isMac = isNode && process.platform === 'darwin';
       if (!isNode && canvas === null) {
-        throw Error('Canvas must be provied in human rendering mode!');
+        throw Error('Canvas must be provied in rendering mode in web!');
       }
 
       if (isMac) {
         throw Error(
-          'Unfortunately SDL does not currently work on Mac OS! Disable human mode.'
+          'Unfortunately Rendering does not currently work on Mac OS! Disable rendering mode.'
         );
       }
 
-      if (isNode) {
+      if (isNode && this.renderMode === 'human') {
         this.window = sdl?.video.createWindow({
-          title: 'Pendulum',
+          title: 'Cart Pole',
           width: PendulumEnv.screenDim,
           height: PendulumEnv.screenDim,
         });
-        if (createCanvas !== undefined) {
-          this.canvas = createCanvas(
-            PendulumEnv.screenDim,
-            PendulumEnv.screenDim
-          );
-        }
+      }
+
+      if (createCanvas !== undefined) {
+        this.canvas = createCanvas(
+          PendulumEnv.screenDim,
+          PendulumEnv.screenDim
+        );
       }
     }
   }
@@ -182,8 +183,12 @@ export class PendulumEnv extends Env {
   /**
    * Renders the environment on the canvas.
    */
-  async render(): Promise<void> {
-    this.draw();
+  async render(): Promise<void | tf.Tensor> {
+    if (this.renderMode === 'human') {
+      this.draw(false);
+    } else if (this.renderMode === 'rgb_array') {
+      return this.draw(true);
+    }
   }
 
   /**
@@ -203,7 +208,7 @@ export class PendulumEnv extends Env {
     return obs;
   }
 
-  private draw(): void {
+  private draw(returnTensor: boolean): tf.Tensor | void {
     // Drawing is mostly the direct translation of gymnasium's Pygame rendering with ChatGPT
     if (this.state === null) {
       throw Error("Can't draw without a state!");
@@ -379,10 +384,16 @@ export class PendulumEnv extends Env {
     );
 
     ctx.restore(); // restore to original transform
+
+    const width = PendulumEnv.screenDim;
+    const height = PendulumEnv.screenDim;
+    if (returnTensor) {
+      const imageArray = ctx.getImageData(0, 0, width, height).data;
+      return tf.tensor(imageArray).reshape([width, height, 4]);
+    }
+
     // Render to window on node js
     if (this.window !== undefined) {
-      const width = PendulumEnv.screenDim;
-      const height = PendulumEnv.screenDim;
       const buffer = Buffer.from(ctx.getImageData(0, 0, width, height).data);
       this.window.render(width, height, width * 4, 'rgba32', buffer);
     }

@@ -56,7 +56,7 @@ export class CartPoleEnv extends Env {
    */
   constructor(
     suttonBartoReward: boolean = false,
-    renderMode: 'human' | null = null,
+    renderMode: 'human' | 'rgb_array' | null = null,
     canvas: HTMLCanvasElement | null = null
   ) {
     let actionSpace = new Discrete(2);
@@ -76,31 +76,32 @@ export class CartPoleEnv extends Env {
     this.canvas = canvas;
     this.window = undefined;
 
-    if (this.renderMode === 'human') {
-      const isNode = typeof process === 'object';
+    const isNode = typeof process === 'object';
+    if (this.renderMode === 'human' || this.renderMode === 'rgb_array') {
       const isMac = isNode && process.platform === 'darwin';
       if (!isNode && canvas === null) {
-        throw Error('Canvas must be provied in human rendering mode!');
+        throw Error('Canvas must be provied in rendering mode in web!');
       }
 
       if (isMac) {
         throw Error(
-          'Unfortunately SDL does not currently work on Mac OS! Disable human mode.'
+          'Unfortunately Rendering does not currently work on Mac OS! Disable rendering mode.'
         );
       }
 
-      if (isNode) {
+      if (isNode && this.renderMode === 'human') {
         this.window = sdl?.video.createWindow({
           title: 'Cart Pole',
           width: CartPoleEnv.screenWidth,
           height: CartPoleEnv.screenHeight,
         });
-        if (createCanvas !== undefined) {
-          this.canvas = createCanvas(
-            CartPoleEnv.screenWidth,
-            CartPoleEnv.screenHeight
-          );
-        }
+      }
+
+      if (createCanvas !== undefined) {
+        this.canvas = createCanvas(
+          CartPoleEnv.screenWidth,
+          CartPoleEnv.screenHeight
+        );
       }
     }
   }
@@ -212,8 +213,12 @@ export class CartPoleEnv extends Env {
   /**
    * Renders the environment on the canvas.
    */
-  async render(): Promise<void> {
-    this.draw();
+  async render(): Promise<void | tf.Tensor> {
+    if (this.renderMode === 'human') {
+      this.draw(false);
+    } else if (this.renderMode === 'rgb_array') {
+      return this.draw(true);
+    }
   }
 
   /**
@@ -223,7 +228,7 @@ export class CartPoleEnv extends Env {
     this.window?.destroy();
   }
 
-  private draw(): void {
+  private draw(returnTensor: boolean): tf.Tensor | void {
     if (this.canvas === null) {
       throw Error("Can't draw without a canvas!");
     }
@@ -330,10 +335,15 @@ export class CartPoleEnv extends Env {
     ctx.arc(cartX, cartY + axleOffset, poleWidth / 2, 0, Math.PI * 2);
     ctx.fill();
 
+    const width = CartPoleEnv.screenWidth;
+    const height = CartPoleEnv.screenHeight;
+    if (returnTensor) {
+      const imageArray = ctx.getImageData(0, 0, width, height).data;
+      return tf.tensor(imageArray).reshape([width, height, 4]);
+    }
+
     // Render to window on node js
     if (this.window !== undefined) {
-      const width = CartPoleEnv.screenWidth;
-      const height = CartPoleEnv.screenHeight;
       const buffer = Buffer.from(ctx.getImageData(0, 0, width, height).data);
       this.window.render(width, height, width * 4, 'rgba32', buffer);
     }
