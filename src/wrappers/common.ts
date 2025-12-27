@@ -161,3 +161,72 @@ export class OrderEnforcing extends Wrapper {
     return this.hasReset;
   }
 }
+
+/**
+ * A wrapper that records the episode's statistics (episode length, cumulative reward and time elapsed since the beginning)
+ * in info with the stats_key as key to a record of rewards, length and time
+ */
+export class RecordEpisodeStatistics extends Wrapper {
+  private statsKey: string;
+  private episodeStartTime: number;
+  private episodeReturns: number;
+  private episodeLengths: number;
+
+  constructor(env: Env | Wrapper, statsKey: string = 'episode') {
+    super(env);
+    this.statsKey = statsKey;
+    this.episodeStartTime = -1;
+    this.episodeReturns = 0;
+    this.episodeLengths = 0;
+  }
+
+  /**
+   * Resets the wrapper.
+   *
+   * @param options - additional informatiom to specify how the environment resets
+   * @returns An array of the observation of the initial state and info
+   */
+  reset(
+    options?: Record<string, any>
+  ): [tf.Tensor, Record<string, any> | null] {
+    this.episodeStartTime = Date.now();
+    this.episodeReturns = 0;
+    this.episodeLengths = 0;
+    return super.reset(options);
+  }
+
+  /**
+   * Takes one step in the wrapper
+   *
+   * @param action - action to take in the environment
+   * @returns A tuple of the observation of the initial state, reward, termination, truncation and info
+   */
+  async step(
+    action: ActType
+  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
+    let [obs, reward, terminated, truncated, info] =
+      await this.env.step(action);
+    this.episodeReturns += reward;
+    this.episodeLengths += 1;
+
+    if (terminated || truncated) {
+      if (info === null) {
+        info = {};
+      }
+
+      if (this.statsKey in info) {
+        throw new Error('Stats key already exists in info!');
+      }
+
+      const elapsedTime = (Date.now() - this.episodeStartTime) / 1000;
+
+      info[this.statsKey] = {
+        rewards: this.episodeReturns,
+        length: this.episodeLengths,
+        time: elapsedTime,
+      };
+    }
+
+    return [obs, reward, terminated, truncated, info];
+  }
+}
