@@ -5,7 +5,7 @@ import { Env } from '../../src/core';
 import { Box } from '../../src/spaces/box';
 import { OrderEnforcing } from '../../src/wrappers';
 
-class ExampleEnv extends Env {
+class ExampleEnv extends Env<tf.Tensor, tf.Tensor> {
   private count: number;
   constructor() {
     const observationSpace = new Box(0, 3, [1], 'int32');
@@ -45,8 +45,7 @@ describe('Test Order Enforcing Wrapper', async () => {
   it('Should not be able to call step before reset', async () => {
     const enforcedEnv = new OrderEnforcing(new ExampleEnv(), false);
     await expect(
-      // @ts-ignore
-      async () => await enforcedEnv.step(enforcedEnv.actionSpace.sample)
+      async () => await enforcedEnv.step(enforcedEnv.actionSpace.sample())
     ).rejects.toThrow('Cannot call env.step() before calling env.reset()');
   });
 
@@ -66,8 +65,7 @@ describe('Test Order Enforcing Wrapper', async () => {
     const enforcedEnv = new OrderEnforcing(new ExampleEnv(), true);
     enforcedEnv.reset();
     await expect(
-      // @ts-ignore
-      async () => await enforcedEnv.step(enforcedEnv.actionSpace.sample)
+      async () => await enforcedEnv.step(enforcedEnv.actionSpace.sample())
     ).not.rejects;
   });
 

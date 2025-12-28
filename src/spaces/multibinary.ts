@@ -1,6 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
 import { Space } from './space';
-import { SpaceType } from '../core';
 
 /**
  * MultiBinary is the representation of n-shape binary space
@@ -65,7 +64,7 @@ export class MultiBinary extends Space<tf.Tensor> {
    *
    * @returns A boolean that specifies if the two multi binary are the same
    */
-  equals(other: SpaceType): boolean {
+  equals(other: Space<any>): boolean {
     if (!(other instanceof MultiBinary)) {
       return false;
     }

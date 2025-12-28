@@ -5,7 +5,7 @@ import { Env } from '../../src/core';
 import { Box } from '../../src/spaces/box';
 import { Autoreset } from '../../src/wrappers';
 
-class ExampleEnv extends Env {
+class ExampleEnv extends Env<tf.Tensor, tf.Tensor> {
   private count: number;
   constructor() {
     const observationSpace = new Box(0, 3, [1], 'int32');

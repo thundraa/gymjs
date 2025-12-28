@@ -1,6 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
 import { Space } from './space';
-import { SpaceType } from '../core';
 
 /**
  * A space consisting of finitely many elements.
@@ -66,7 +65,7 @@ export class Discrete extends Space<number> {
    *
    * @returns A boolean that specifies if the two discrete are the same
    */
-  equals(other: SpaceType): boolean {
+  equals(other: Space<any>): boolean {
     if (!(other instanceof Discrete)) {
       return false;
     }
