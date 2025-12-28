@@ -243,7 +243,7 @@ export abstract class RewardWrapper<ObsType, ActType> extends Wrapper<
   ObsType,
   ActType
 > {
-  constructor(env: Env<ObsType, ActType>) {
+  constructor(env: BaseEnv<ObsType, ActType>) {
     super(env);
   }
 
@@ -271,7 +271,7 @@ export abstract class ActionWrapper<
   ObsType,
   ActType,
 > extends Wrapper<ObsType, WrapperActType, ObsType, ActType> {
-  constructor(env: Env<ObsType, ActType>) {
+  constructor(env: BaseEnv<ObsType, ActType>) {
     super(env);
   }
 
