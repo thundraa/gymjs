@@ -5,7 +5,7 @@ import { Env } from '../../src/core';
 import { Box } from '../../src/spaces/box';
 import { TimeLimit } from '../../src/wrappers';
 
-class ExampleEnv extends Env {
+class ExampleEnv extends Env<tf.Tensor, tf.Tensor> {
   constructor() {
     const observationSpace = new Box(0, 1, [1], 'float32');
     const actioSpace = new Box(0, 1, [1], 'float32');

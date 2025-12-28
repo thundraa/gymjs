@@ -1,31 +1,17 @@
 import * as tf from '@tensorflow/tfjs';
 
-import { Space, Discrete, Box, MultiDiscrete, MultiBinary } from './spaces';
-
-export type ActType = number | tf.Tensor;
-export type ObsType = tf.Tensor;
-export type SpaceType = Discrete | Box | MultiDiscrete | MultiBinary;
+import { Space } from './spaces';
 
 /**
  * An abstract class that represents the structure of an environment.
  */
-export abstract class Env {
+abstract class BaseEnv<ObsType, ActType> {
   /** The action space of the environment */
-  public actionSpace: SpaceType;
+  protected _actionSpace?: Space<ActType>;
   /** The observation space of the environment */
-  public observationSpace: SpaceType;
+  protected _observationSpace?: Space<ObsType>;
   /** The render mode of the environment */
-  private readonly _renderMode: string | null;
-
-  constructor(
-    actionSpace: SpaceType,
-    observationSpace: SpaceType,
-    renderMode: string | null
-  ) {
-    this.actionSpace = actionSpace;
-    this.observationSpace = observationSpace;
-    this._renderMode = renderMode;
-  }
+  public renderMode: string | null = null;
 
   /**
    * Resets the environment.
@@ -56,33 +42,53 @@ export abstract class Env {
    */
   abstract close(): void;
 
-  get unwrapped(): Env {
+  get unwrapped(): BaseEnv<unknown, unknown> {
     return this;
   }
 
-  get renderMode(): string | null {
-    return this._renderMode;
+  abstract get observationSpace(): Space<unknown>;
+  abstract get actionSpace(): Space<unknown>;
+}
+
+export abstract class Env<ObsType, ActType> extends BaseEnv<ObsType, ActType> {
+  /** The action space of the environment */
+  public actionSpace: Space<ActType>;
+  /** The observation space of the environment */
+  public observationSpace: Space<ObsType>;
+  /** The render mode of the environment */
+  public renderMode: string | null;
+
+  constructor(
+    actionSpace: Space<ActType>,
+    observationSpace: Space<ObsType>,
+    renderMode: string | null
+  ) {
+    super();
+    this.actionSpace = actionSpace;
+    this.observationSpace = observationSpace;
+    this.renderMode = renderMode;
+  }
+
+  get unwrapped(): Env<unknown, unknown> {
+    return this;
   }
 }
 
 /**
  * Wrapper around an environment, meant to change/add the behaviour or funtionality
  */
-export abstract class Wrapper {
+export abstract class Wrapper<
+  WrapperObsType,
+  WrapperActType,
+  ObsType,
+  ActType,
+> extends BaseEnv<WrapperObsType, WrapperActType> {
   /** Environemnt to wrap */
-  env: Env | Wrapper;
-  /** Substitute action space */
-  protected _actionSpace: SpaceType | null;
-  /** Substitute observation space */
-  protected _observationSpace: SpaceType | null;
-  /** Substitute Rendermode */
-  protected _renderMode: string | null;
+  env: Env<ObsType, ActType>;
 
-  constructor(env: Env | Wrapper) {
+  constructor(env: Env<ObsType, ActType>) {
+    super();
     this.env = env;
-    this._actionSpace = null;
-    this._observationSpace = null;
-    this._renderMode = null;
   }
 
   /**
@@ -91,8 +97,12 @@ export abstract class Wrapper {
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
-  reset(options?: Record<string, any>): [ObsType, Record<string, any> | null] {
-    return this.env.reset(options);
+  reset(
+    options?: Record<string, any>
+  ): [WrapperObsType, Record<string, any> | null] {
+    const [obs, info] = this.env.reset(options);
+    // TODO: fix ...as unknown as...
+    return [obs as unknown as WrapperObsType, info];
   }
 
   /**
@@ -102,9 +112,21 @@ export abstract class Wrapper {
    * @returns A tuple of the observation of the initial state, reward, termination, truncation and info
    */
   async step(
-    action: ActType
-  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
-    return this.env.step(action);
+    action: WrapperActType
+  ): Promise<
+    [WrapperObsType, number, boolean, boolean, Record<string, any> | null]
+  > {
+    // TODO: fix ...as unknown as...
+    const [obs, reward, terminated, truncated, info] = await this.env.step(
+      action as unknown as ActType
+    );
+    return [
+      obs as unknown as WrapperObsType,
+      reward,
+      terminated,
+      truncated,
+      info,
+    ];
   }
 
   /**
@@ -122,10 +144,16 @@ export abstract class Wrapper {
     this.env.close();
   }
   /**
+   * @returns the unwrapped environment
+   */
+  get unwrapped(): Env<unknown, unknown> {
+    return this.env.unwrapped;
+  }
+  /**
    * @returns the action space of the wrapper.
    */
-  get actionSpace(): SpaceType {
-    if (this._actionSpace === null) {
+  get actionSpace(): Space<WrapperActType> | Space<ActType> {
+    if (this._actionSpace === undefined) {
       return this.env.actionSpace;
     } else {
       return this._actionSpace;
@@ -134,48 +162,36 @@ export abstract class Wrapper {
   /**
    * @returns the observation space of the wrapper.
    */
-  get observationSpace(): SpaceType {
-    if (this._observationSpace === null) {
+  get observationSpace(): Space<WrapperObsType> | Space<ObsType> {
+    if (this._observationSpace === undefined) {
       return this.env.observationSpace;
     } else {
       return this._observationSpace;
     }
   }
   /**
-   * Sets the action space
+   * Sets the action space of the wrapper.
    */
-  set actionSpace(space: SpaceType) {
+  set actionSpace(space: Space<WrapperActType>) {
     this._actionSpace = space;
   }
   /**
-   * Sets the observation space
+   * Sets the observation space of the wrapper.
    */
-  set observationSpace(space: SpaceType) {
+  set observationSpace(space: Space<WrapperObsType>) {
     this._observationSpace = space;
-  }
-  /**
-   * @returns the unwrapped environment
-   */
-  get unwrapped(): Env | Wrapper {
-    return this.env.unwrapped;
-  }
-  /**
-   * @returns the rendermode
-   */
-  get renderMode(): string | null {
-    if (this._renderMode === null) {
-      return this.env.renderMode;
-    } else {
-      return this._renderMode;
-    }
   }
 }
 
 /**
  * A specifc wrapper that only makes changes to the observation
  */
-export abstract class ObservationWrapper extends Wrapper {
-  constructor(env: Env | Wrapper) {
+export abstract class ObservationWrapper<
+  WrapperObsType,
+  ObsType,
+  ActType,
+> extends Wrapper<WrapperObsType, ActType, ObsType, ActType> {
+  constructor(env: Env<ObsType, ActType>) {
     super(env);
   }
 
@@ -185,14 +201,18 @@ export abstract class ObservationWrapper extends Wrapper {
    * @param options - additional informatiom to specify how the environment resets
    * @returns An array of the observation of the initial state and info
    */
-  reset(options?: Record<string, any>): [ObsType, Record<string, any> | null] {
+  reset(
+    options?: Record<string, any>
+  ): [WrapperObsType, Record<string, any> | null] {
     let [obs, info] = this.env.reset(options);
     return [this.observarionTransform(obs), info];
   }
 
   async step(
     action: ActType
-  ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
+  ): Promise<
+    [WrapperObsType, number, boolean, boolean, Record<string, any> | null]
+  > {
     let [obs, reward, terminated, truncated, info] =
       await this.env.step(action);
     return [
@@ -209,14 +229,19 @@ export abstract class ObservationWrapper extends Wrapper {
    * @param obs - The original observation to change
    * @returns the transformed observation
    */
-  abstract observarionTransform(obs: tf.Tensor): tf.Tensor;
+  abstract observarionTransform(obs: ObsType): WrapperObsType;
 }
 
 /**
  * A specifc wrapper that only makes changes to the rewards
  */
-export abstract class RewardWrapper extends Wrapper {
-  constructor(env: Env | Wrapper) {
+export abstract class RewardWrapper<ObsType, ActType> extends Wrapper<
+  ObsType,
+  ActType,
+  ObsType,
+  ActType
+> {
+  constructor(env: Env<ObsType, ActType>) {
     super(env);
   }
 
@@ -239,18 +264,19 @@ export abstract class RewardWrapper extends Wrapper {
 /**
  * A specifc wrapper that only makes changes to the actions
  */
-export abstract class ActionWrapper extends Wrapper {
-  constructor(env: Env | Wrapper) {
+export abstract class ActionWrapper<
+  WrapperActType,
+  ObsType,
+  ActType,
+> extends Wrapper<ObsType, WrapperActType, ObsType, ActType> {
+  constructor(env: Env<ObsType, ActType>) {
     super(env);
   }
 
   async step(
-    action: ActType
+    action: WrapperActType
   ): Promise<[ObsType, number, boolean, boolean, Record<string, any> | null]> {
-    action = this.actionTransform(action);
-    let [obs, reward, terminated, truncated, info] =
-      await this.env.step(action);
-    return [obs, reward, terminated, truncated, info];
+    return await this.env.step(this.actionTransform(action));
   }
   /**
    * Makes changes to the actions of the environment
@@ -258,5 +284,5 @@ export abstract class ActionWrapper extends Wrapper {
    * @param action - The original action to change
    * @returns the transformed action
    */
-  abstract actionTransform(action: ActType): ActType;
+  abstract actionTransform(action: WrapperActType): ActType;
 }

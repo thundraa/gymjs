@@ -1,5 +1,4 @@
 import * as tf from '@tensorflow/tfjs';
-import { ObsType, ActType, SpaceType } from '../core';
 
 /**
  * An abstract class that represents the structure of a space.
@@ -34,5 +33,5 @@ export abstract class Space<T> {
    *
    * @returns A boolean that specifies if the two spaces are the same
    */
-  abstract equals(other: SpaceType): boolean;
+  abstract equals(other: Space<any>): boolean;
 }

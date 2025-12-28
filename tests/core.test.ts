@@ -11,7 +11,7 @@ import {
 import { Box, Space } from '../src/spaces';
 import { Tensor } from '@tensorflow/tfjs';
 
-class ExampleEnv extends Env {
+class ExampleEnv extends Env<tf.Tensor, tf.Tensor> {
   constructor() {
     const observationSpace = new Box(0, 1, [1], 'float32');
     const actioSpace = new Box(0, 1, [1], 'float32');
@@ -48,8 +48,13 @@ describe('Test Env', () => {
   });
 });
 
-class ExampleWrapper extends Wrapper {
-  constructor(env: Env | Wrapper) {
+class ExampleWrapper extends Wrapper<
+  tf.Tensor,
+  tf.Tensor,
+  tf.Tensor,
+  tf.Tensor
+> {
+  constructor(env: Env<tf.Tensor, tf.Tensor>) {
     super(env);
   }
 
@@ -60,7 +65,7 @@ class ExampleWrapper extends Wrapper {
   }
 
   async step(
-    action: tf.Tensor | number
+    action: tf.Tensor
   ): Promise<
     [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
   > {
@@ -70,12 +75,17 @@ class ExampleWrapper extends Wrapper {
   }
 }
 
-class ExampleWrapperDifferent extends Wrapper {
-  constructor(env: Env | Wrapper) {
+class ExampleWrapperDifferent extends Wrapper<
+  tf.Tensor,
+  tf.Tensor,
+  tf.Tensor,
+  tf.Tensor
+> {
+  constructor(env: Env<tf.Tensor, tf.Tensor>) {
     super(env);
-    this._observationSpace = new Box(0, 2, [1], 'float32');
-    this._actionSpace = new Box(0, 2, [1], 'float32');
-    this._renderMode = 'human';
+    this.observationSpace = new Box(0, 2, [1], 'float32');
+    this.actionSpace = new Box(0, 2, [1], 'float32');
+    this.renderMode = 'human';
   }
 
   reset(
@@ -85,7 +95,7 @@ class ExampleWrapperDifferent extends Wrapper {
   }
 
   async step(
-    action: tf.Tensor | number
+    action: tf.Tensor
   ): Promise<
     [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
   > {
@@ -134,19 +144,27 @@ describe('Test Wrapper', () => {
   });
 });
 
-class ExampleRewardWrapper extends RewardWrapper {
+class ExampleRewardWrapper extends RewardWrapper<tf.Tensor, tf.Tensor> {
   rewardTransform(reward: number): number {
     return 1;
   }
 }
 
-class ExampleObservationWrapper extends ObservationWrapper {
+class ExampleObservationWrapper extends ObservationWrapper<
+  tf.Tensor,
+  tf.Tensor,
+  tf.Tensor
+> {
   observarionTransform(obs: tf.Tensor): tf.Tensor {
     return tf.tensor([1], [1], 'float32');
   }
 }
 
-class ExampleActionWrapper extends ActionWrapper {
+class ExampleActionWrapper extends ActionWrapper<
+  tf.Tensor,
+  tf.Tensor,
+  tf.Tensor
+> {
   actionTransform(action: tf.Tensor): tf.Tensor {
     return tf.tensor([1], [1], 'float32');
   }

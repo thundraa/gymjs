@@ -20,7 +20,7 @@ import { Env } from '../../core';
  * The Cartpole problem in reinforcement learning involves balancing a pole on a moving cart along a track, where the agent
  * must learn to keep the pole upright by choosing to move the cart left or right based on the state of the system.
  */
-export class PendulumEnv extends Env {
+export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
   // A bunch of environment constants
   static readonly maxSpeed = 8;
   static readonly maxTorque = 2.0;
