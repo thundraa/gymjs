@@ -95,10 +95,10 @@ export class MultiDiscrete extends Space<tf.Tensor> {
    * @returns A boolean that specifies if the two multi discrete are the same
    */
   equals(other: SpaceType): boolean {
-    if(!(other instanceof MultiDiscrete)) {
+    if (!(other instanceof MultiDiscrete)) {
       return false;
     }
-  
+
     if (
       checkTensors(this.nVec, other.nVec, true) &&
       checkTensors(this.start, other.start, true)

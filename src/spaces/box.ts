@@ -148,7 +148,7 @@ export class Box extends Space<tf.Tensor> {
    * @returns A boolean that specifies if the two discrete are the same
    */
   equals(other: SpaceType): boolean {
-    if(!(other instanceof Box)) {
+    if (!(other instanceof Box)) {
       return false;
     }
 

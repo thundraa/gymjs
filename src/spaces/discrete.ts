@@ -67,10 +67,10 @@ export class Discrete extends Space<number> {
    * @returns A boolean that specifies if the two discrete are the same
    */
   equals(other: SpaceType): boolean {
-    if(!(other instanceof Discrete)) {
+    if (!(other instanceof Discrete)) {
       return false;
     }
-  
+
     if (this.n === other.n && this.start === other.start) {
       return true;
     } else {

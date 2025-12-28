@@ -66,10 +66,10 @@ export class MultiBinary extends Space<tf.Tensor> {
    * @returns A boolean that specifies if the two multi binary are the same
    */
   equals(other: SpaceType): boolean {
-    if(!(other instanceof MultiBinary)) {
+    if (!(other instanceof MultiBinary)) {
       return false;
     }
-  
+
     if (typeof this.n === 'number' && typeof other.n === 'number') {
       return this.n === other.n;
     } else if (Array.isArray(this.n) && Array.isArray(other.n)) {
