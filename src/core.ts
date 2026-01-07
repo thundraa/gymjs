@@ -84,9 +84,9 @@ export abstract class Wrapper<
   ActType,
 > extends BaseEnv<WrapperObsType, WrapperActType> {
   /** Environemnt to wrap */
-  env: Env<ObsType, ActType>;
+  env: BaseEnv<ObsType, ActType>;
 
-  constructor(env: Env<ObsType, ActType>) {
+  constructor(env: BaseEnv<ObsType, ActType>) {
     super();
     this.env = env;
   }
@@ -154,7 +154,8 @@ export abstract class Wrapper<
    */
   get actionSpace(): Space<WrapperActType> | Space<ActType> {
     if (this._actionSpace === undefined) {
-      return this.env.actionSpace;
+      // We know that the type of action space of the wrapper must be Space<ActType>
+      return this.env.actionSpace as Space<ActType>;
     } else {
       return this._actionSpace;
     }
@@ -164,7 +165,8 @@ export abstract class Wrapper<
    */
   get observationSpace(): Space<WrapperObsType> | Space<ObsType> {
     if (this._observationSpace === undefined) {
-      return this.env.observationSpace;
+      // We know that the type of observation space of the wrapper must be Space<ObsType>
+      return this.env.observationSpace as Space<ObsType>;
     } else {
       return this._observationSpace;
     }
@@ -191,7 +193,7 @@ export abstract class ObservationWrapper<
   ObsType,
   ActType,
 > extends Wrapper<WrapperObsType, ActType, ObsType, ActType> {
-  constructor(env: Env<ObsType, ActType>) {
+  constructor(env: BaseEnv<ObsType, ActType>) {
     super(env);
   }
 
@@ -241,7 +243,7 @@ export abstract class RewardWrapper<ObsType, ActType> extends Wrapper<
   ObsType,
   ActType
 > {
-  constructor(env: Env<ObsType, ActType>) {
+  constructor(env: BaseEnv<ObsType, ActType>) {
     super(env);
   }
 
@@ -269,7 +271,7 @@ export abstract class ActionWrapper<
   ObsType,
   ActType,
 > extends Wrapper<ObsType, WrapperActType, ObsType, ActType> {
-  constructor(env: Env<ObsType, ActType>) {
+  constructor(env: BaseEnv<ObsType, ActType>) {
     super(env);
   }
 
