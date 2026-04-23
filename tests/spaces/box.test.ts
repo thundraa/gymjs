@@ -20,7 +20,7 @@ describe('Test Shape Errors', () => {
 describe('Test Low and High Differene Errors', () => {
   it('Low is higher than high', () => {
     expect(() => new Box(1, 0, [1], 'float32')).toThrow(
-      'High is lower than low!'
+      'Not all values in high are higher than low!'
     );
   });
 
