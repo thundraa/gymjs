@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 
-import { ActionWrapper } from '../core';
+import { ActionWrapper, Env } from '../core';
 import { Box } from '../spaces';
 
 export class ClipAction<ObsType> extends ActionWrapper<
@@ -8,9 +8,24 @@ export class ClipAction<ObsType> extends ActionWrapper<
   ObsType,
   tf.Tensor
 > {
+  constructor(env: Env<ObsType, tf.Tensor>) {
+    super(env);
+
+    if (!(this.env.actionSpace instanceof Box)) {
+      throw new Error('Clip action only works for Box space');
+    }
+
+    this.actionSpace = new Box(
+      -Infinity,
+      Infinity,
+      this.actionSpace.shape,
+      this.actionSpace.dtype
+    );
+  }
+
   actionTransform(action: tf.Tensor): tf.Tensor {
     return tf.tidy(() => {
-      if (!(this.actionSpace instanceof Box)) {
+      if (!(this.env.actionSpace instanceof Box)) {
         throw new Error('Clip action only works for Box space');
       }
 
@@ -20,17 +35,19 @@ export class ClipAction<ObsType> extends ActionWrapper<
       let high: tf.Tensor;
 
       if (
-        typeof this.actionSpace.low === 'number' &&
-        typeof this.actionSpace.high === 'number'
+        typeof this.env.actionSpace.low === 'number' &&
+        typeof this.env.actionSpace.high === 'number'
       ) {
-        low = tf.ones(this.actionSpace.shape).mul(this.actionSpace.low);
-        high = tf.ones(this.actionSpace.shape).mul(this.actionSpace.high);
+        low = tf.ones(this.env.actionSpace.shape).mul(this.env.actionSpace.low);
+        high = tf
+          .ones(this.env.actionSpace.shape)
+          .mul(this.env.actionSpace.high);
       } else if (
-        this.actionSpace.low instanceof tf.Tensor &&
-        this.actionSpace.high instanceof tf.Tensor
+        this.env.actionSpace.low instanceof tf.Tensor &&
+        this.env.actionSpace.high instanceof tf.Tensor
       ) {
-        low = this.actionSpace.low;
-        high = this.actionSpace.high;
+        low = this.env.actionSpace.low;
+        high = this.env.actionSpace.high;
       } else {
         throw new Error('Low and high must be of the same type');
       }
