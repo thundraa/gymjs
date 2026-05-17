@@ -31,32 +31,11 @@ export class ClipAction<ObsType> extends ActionWrapper<
 
       let newAction = action.clone();
 
-      let low: tf.Tensor;
-      let high: tf.Tensor;
+      const lower = action.less(this.env.actionSpace.low);
+      const higher = this.env.actionSpace.high.less(action);
 
-      if (
-        typeof this.env.actionSpace.low === 'number' &&
-        typeof this.env.actionSpace.high === 'number'
-      ) {
-        low = tf.ones(this.env.actionSpace.shape).mul(this.env.actionSpace.low);
-        high = tf
-          .ones(this.env.actionSpace.shape)
-          .mul(this.env.actionSpace.high);
-      } else if (
-        this.env.actionSpace.low instanceof tf.Tensor &&
-        this.env.actionSpace.high instanceof tf.Tensor
-      ) {
-        low = this.env.actionSpace.low;
-        high = this.env.actionSpace.high;
-      } else {
-        throw new Error('Low and high must be of the same type');
-      }
-
-      const lower = action.less(low);
-      const higher = high.less(action);
-
-      newAction = tf.where(lower, low, newAction);
-      newAction = tf.where(higher, high, newAction);
+      newAction = tf.where(lower, this.env.actionSpace.low, newAction);
+      newAction = tf.where(higher, this.env.actionSpace.high, newAction);
 
       return newAction;
     });
