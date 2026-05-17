@@ -19,8 +19,8 @@ export function checkTensors(
   }
 
   // Same elements
-  if (checkElements && firstTensor.equal(secondTensor).dataSync()[0] !== 1) {
-    return false;
+  if (checkElements) {
+    return tf.all(firstTensor.equal(secondTensor)).dataSync()[0] === 1;
   }
 
   return true;
