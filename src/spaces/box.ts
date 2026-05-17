@@ -7,9 +7,9 @@ import { checkTensors } from '../utils';
  */
 export class Box extends Space<tf.Tensor> {
   /** The lower bound for the value */
-  public low: tf.Tensor | number;
+  public low: tf.Tensor;
   /** The upper bound for the value */
-  public high: tf.Tensor | number;
+  public high: tf.Tensor;
 
   constructor(
     low: tf.Tensor | number,
@@ -19,26 +19,27 @@ export class Box extends Space<tf.Tensor> {
   ) {
     super(shape, dtype);
 
-    if (typeof low !== typeof high) {
-      throw new Error('Low and high should be of the same type!');
-    } else if (low instanceof tf.Tensor && high instanceof tf.Tensor) {
-      if (JSON.stringify(low.shape) !== JSON.stringify(shape)) {
-        throw new Error('Low should have the same shape as Box!');
-      }
-      if (JSON.stringify(high.shape) !== JSON.stringify(shape)) {
-        throw new Error('High should have the same shape as Box!');
-      }
-      if (high.less(low).any().dataSync()[0]) {
-        throw new Error('Not all values in high are higher than low!');
-      }
-    } else if (typeof low === 'number' && typeof high === 'number') {
-      if (high < low) {
-        throw new Error('High is lower than low!');
-      }
+    if (typeof low === 'number') {
+      this.low = tf.fill(shape, low, dtype);
+    } else {
+      this.low = low;
     }
 
-    this.low = low;
-    this.high = high;
+    if (typeof high === 'number') {
+      this.high = tf.fill(shape, high, dtype);
+    } else {
+      this.high = high;
+    }
+
+    if (JSON.stringify(this.low.shape) !== JSON.stringify(this.shape)) {
+      throw new Error('Low should have the same shape as Box!');
+    }
+    if (JSON.stringify(this.high.shape) !== JSON.stringify(shape)) {
+      throw new Error('High should have the same shape as Box!');
+    }
+    if (this.high.less(this.low).any().dataSync()[0]) {
+      throw new Error('Not all values in high are higher than low!');
+    }
   }
 
   /**
@@ -49,63 +50,50 @@ export class Box extends Space<tf.Tensor> {
    * @override
    */
   sample(): tf.Tensor {
-    if (typeof this.low === 'number' && typeof this.high === 'number') {
-      return tf.randomUniform(this.shape, this.low, this.high, this.dtype);
-    } else if (
-      this.low instanceof tf.Tensor &&
-      this.high instanceof tf.Tensor
-    ) {
-      return tf.tidy(() => {
-        let low = this.low as tf.Tensor;
-        let high = this.high as tf.Tensor;
-        if (high.dtype === 'int32') {
-          high = high.add(tf.scalar(1));
-        }
+    return tf.tidy(() => {
+      let low = this.low as tf.Tensor;
+      let high = this.high as tf.Tensor;
+      if (high.dtype === 'int32') {
+        high = high.add(tf.scalar(1));
+      }
 
-        low = low.asType('float32');
-        high = high.asType('float32');
+      low = low.asType('float32');
+      high = high.asType('float32');
 
-        let sample = tf.zeros(this.shape, 'float32');
+      let sample = tf.zeros(this.shape, 'float32');
 
-        let boundedBelow = tf.neg(low).less(tf.scalar(Infinity));
-        let boundedAbove = high.less(tf.scalar(Infinity));
+      let boundedBelow = tf.neg(low).less(tf.scalar(Infinity));
+      let boundedAbove = high.less(tf.scalar(Infinity));
 
-        let unbounded = boundedBelow
-          .logicalNot()
-          .logicalAnd(boundedAbove.logicalNot());
-        let boundedBelowOnly = boundedBelow.logicalAnd(
-          boundedAbove.logicalNot()
-        );
-        let boundedAboveOnly = boundedAbove.logicalAnd(
-          boundedBelow.logicalNot()
-        );
-        let bounded = boundedBelow.logicalAnd(boundedAbove);
+      let unbounded = boundedBelow
+        .logicalNot()
+        .logicalAnd(boundedAbove.logicalNot());
+      let boundedBelowOnly = boundedBelow.logicalAnd(boundedAbove.logicalNot());
+      let boundedAboveOnly = boundedAbove.logicalAnd(boundedBelow.logicalNot());
+      let bounded = boundedBelow.logicalAnd(boundedAbove);
 
-        sample = tf.where(
-          unbounded,
-          tf.randomNormal(this.shape, 0, 1, 'float32'),
-          sample
-        );
+      sample = tf.where(
+        unbounded,
+        tf.randomNormal(this.shape, 0, 1, 'float32'),
+        sample
+      );
 
-        let boundedTensor = tf.randomUniform(this.shape, 0, 1, 'float32');
-        boundedTensor.print();
-        boundedTensor = boundedTensor.mul(high.sub(low));
-        boundedTensor = boundedTensor.add(low);
-        sample = tf.where(bounded, boundedTensor, sample);
+      let boundedTensor = tf.randomUniform(this.shape, 0, 1, 'float32');
+      boundedTensor.print();
+      boundedTensor = boundedTensor.mul(high.sub(low));
+      boundedTensor = boundedTensor.add(low);
+      sample = tf.where(bounded, boundedTensor, sample);
 
-        let unboundedBelowTensor = randomExponential(this.shape);
-        unboundedBelowTensor = unboundedBelowTensor.add(low);
-        sample = tf.where(boundedBelowOnly, unboundedBelowTensor, sample);
+      let unboundedBelowTensor = randomExponential(this.shape);
+      unboundedBelowTensor = unboundedBelowTensor.add(low);
+      sample = tf.where(boundedBelowOnly, unboundedBelowTensor, sample);
 
-        let unboundedAboveTensor = randomExponential(this.shape);
-        unboundedAboveTensor = tf.neg(unboundedAboveTensor).add(high);
-        sample = tf.where(boundedAboveOnly, unboundedAboveTensor, sample);
+      let unboundedAboveTensor = randomExponential(this.shape);
+      unboundedAboveTensor = tf.neg(unboundedAboveTensor).add(high);
+      sample = tf.where(boundedAboveOnly, unboundedAboveTensor, sample);
 
-        return sample.asType(this.dtype);
-      });
-    } else {
-      throw new Error('Low and high should be of the same type!');
-    }
+      return sample.asType(this.dtype);
+    });
   }
 
   /**
@@ -155,25 +143,11 @@ export class Box extends Space<tf.Tensor> {
       return false;
     } else if (JSON.stringify(this.shape) !== JSON.stringify(other.shape)) {
       return false;
-    } else if (
-      typeof this.low === 'number' &&
-      typeof other.low === 'number' &&
-      typeof this.high === 'number' &&
-      typeof other.high === 'number'
-    ) {
-      return this.low === other.low && this.high === other.high;
-    } else if (
-      this.low instanceof tf.Tensor &&
-      other.low instanceof tf.Tensor &&
-      this.high instanceof tf.Tensor &&
-      other.high instanceof tf.Tensor
-    ) {
+    } else {
       return (
         checkTensors(this.low, other.low, true) &&
         checkTensors(this.high, other.high, true)
       );
-    } else {
-      return false;
     }
   }
 }
