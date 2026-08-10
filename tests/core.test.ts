@@ -155,7 +155,7 @@ class ExampleObservationWrapper extends ObservationWrapper<
   tf.Tensor,
   tf.Tensor
 > {
-  observarionTransform(obs: tf.Tensor): tf.Tensor {
+  observationTransform(obs: tf.Tensor): tf.Tensor {
     return tf.tensor([1], [1], 'float32');
   }
 }

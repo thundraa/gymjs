@@ -207,7 +207,7 @@ export abstract class ObservationWrapper<
     options?: Record<string, any>
   ): [WrapperObsType, Record<string, any> | null] {
     let [obs, info] = this.env.reset(options);
-    return [this.observarionTransform(obs), info];
+    return [this.observationTransform(obs), info];
   }
 
   async step(
@@ -218,7 +218,7 @@ export abstract class ObservationWrapper<
     let [obs, reward, terminated, truncated, info] =
       await this.env.step(action);
     return [
-      this.observarionTransform(obs),
+      this.observationTransform(obs),
       reward,
       terminated,
       truncated,
@@ -231,7 +231,7 @@ export abstract class ObservationWrapper<
    * @param obs - The original observation to change
    * @returns the transformed observation
    */
-  abstract observarionTransform(obs: ObsType): WrapperObsType;
+  abstract observationTransform(obs: ObsType): WrapperObsType;
 }
 
 /**
