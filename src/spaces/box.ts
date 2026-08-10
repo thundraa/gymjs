@@ -77,9 +77,7 @@ export class Box extends Space<tf.Tensor> {
         tf.randomNormal(this.shape, 0, 1, 'float32'),
         sample
       );
-
       let boundedTensor = tf.randomUniform(this.shape, 0, 1, 'float32');
-      boundedTensor.print();
       boundedTensor = boundedTensor.mul(high.sub(low));
       boundedTensor = boundedTensor.add(low);
       sample = tf.where(bounded, boundedTensor, sample);
