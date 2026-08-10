@@ -219,7 +219,7 @@ export class CartPoleEnv extends Env<tf.Tensor, number> {
 
     const ctx = this.canvas.getContext('2d');
     if (ctx === null) {
-      throw Error('Context must not be bull!');
+      throw Error('Context must not be null!');
     }
 
     this.canvas.width = CartPoleEnv.screenWidth;

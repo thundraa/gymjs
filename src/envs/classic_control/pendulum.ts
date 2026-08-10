@@ -203,7 +203,7 @@ export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
 
     const ctx = this.canvas.getContext('2d');
     if (ctx === null) {
-      throw Error('Context must not be bull!');
+      throw Error('Context must not be null!');
     }
 
     this.canvas.width = PendulumEnv.screenDim;
