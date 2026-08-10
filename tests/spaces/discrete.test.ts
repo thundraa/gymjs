@@ -6,7 +6,7 @@ import { Discrete } from '../../src/spaces/discrete';
 describe('Test Shape Errors', () => {
   it('Number of discrete elements must be positive', () => {
     expect(() => new Discrete(-1)).toThrow(
-      'The nummber of discrete elements must be positive!'
+      'The number of discrete elements must be positive!'
     );
   });
 });

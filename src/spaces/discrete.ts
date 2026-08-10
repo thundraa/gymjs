@@ -12,7 +12,7 @@ export class Discrete extends Space<number> {
 
   constructor(n: number, start: number = 0) {
     if (n <= 0) {
-      throw new Error('The nummber of discrete elements must be positive!');
+      throw new Error('The number of discrete elements must be positive!');
     }
     super([], 'int32');
     this.n = n;
