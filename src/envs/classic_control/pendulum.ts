@@ -10,9 +10,7 @@ let createCanvas: typeof import('@napi-rs/canvas').createCanvas | undefined =
   undefined;
 
 /**
- * CartPole, an environment that corresponds to the version of the cart-pole problem described by Barto, Sutton, and Anderson
- * The Cartpole problem in reinforcement learning involves balancing a pole on a moving cart along a track, where the agent
- * must learn to keep the pole upright by choosing to move the cart left or right based on the state of the system.
+ * Pendulum, an environment where the agent must learn to swing a pendulum upright and keep it balanced.
  */
 export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
   // A bunch of environment constants
@@ -83,7 +81,7 @@ export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
   /**
    * Resets the environment.
    *
-   * @returns a tuple of observation (type float32 and shape [4]) and info (null)
+   * @returns a tuple of observation (type float32 and shape [3]) and info (null)
    */
   reset(): [tf.Tensor, null] {
     const high = tf.tensor([PendulumEnv.defaultX, PendulumEnv.defaulty]);
@@ -105,7 +103,7 @@ export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
    * @param action - The force applied, between -2 and 2. The absolute value is the strength of the force and
    * positive value means that the force is rightward and negative means that it's leftward.
    *
-   * @returns A tuple of observation (type float32 and shape [4]), reward, terminated, truncated and info (null)
+   * @returns A tuple of observation (type float32 and shape [3]), reward, terminated, truncated and info (null)
    */
   async step(
     action: tf.Tensor
