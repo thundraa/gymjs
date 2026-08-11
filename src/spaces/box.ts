@@ -121,7 +121,7 @@ export class Box extends Space<tf.Tensor> {
       .lessEqual(this.high)
       .logicalAnd(tf.logicalNot(x.less(this.low)));
 
-    if (inBound.any().dataSync()[0]) {
+    if (inBound.all().dataSync()[0]) {
       return true;
     }
     return false;
