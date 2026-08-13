@@ -64,6 +64,43 @@ describe.each([
   }
 );
 
+describe('Test Contains All Elements', () => {
+  const space = new Box(0, 1, [2], 'float32');
+
+  it('Should contain a tensor with all elements in bounds', () => {
+    expect.assert(space.contains(tf.tensor([0.25, 0.75])));
+  });
+
+  it('Should not contain a tensor with only some elements in bounds', () => {
+    expect.assert(!space.contains(tf.tensor([0.5, 5])));
+  });
+
+  it('Should not contain a tensor with all elements out of bounds', () => {
+    expect.assert(!space.contains(tf.tensor([-1, 5])));
+  });
+
+  it('Should contain a tensor sitting on the bounds', () => {
+    expect.assert(space.contains(tf.tensor([0, 1])));
+  });
+});
+
+describe('Test Contains Rejects NaN', () => {
+  it('Bounded space should not contain NaN', () => {
+    const space = new Box(0, 1, [1], 'float32');
+    expect.assert(!space.contains(tf.tensor([NaN])));
+  });
+
+  it('Unbounded space should not contain NaN', () => {
+    const space = new Box(-Infinity, Infinity, [2], 'float32');
+    expect.assert(!space.contains(tf.tensor([0.5, NaN])));
+  });
+
+  it('Bounded space should not contain a mix of finite and NaN values', () => {
+    const space = new Box(0, 1, [2], 'float32');
+    expect.assert(!space.contains(tf.tensor([0.5, NaN])));
+  });
+});
+
 describe('Test Equality', () => {
   const space = new Box(0, 1, [2], 'float32');
   it('Spaces should be equal', () => {
