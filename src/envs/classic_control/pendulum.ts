@@ -67,7 +67,7 @@ export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
     const isNode = typeof window === 'undefined';
 
     if (!isNode && renderMode !== null && canvas === null) {
-      throw Error('Canvas must be provied in rendering mode in web!');
+      throw Error('Canvas must be provided in rendering mode in web!');
     }
 
     if (
