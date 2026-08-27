@@ -63,11 +63,13 @@ export class StickyAction<ObsType, ActType> extends ActionWrapper<
     let nextAction = action;
     // TODO: Use seeds when implemented
     if (
-      this.isStickyActions || (this.lastAction !== null && Math.random() < this.repeatActionProbability)
+      this.isStickyActions ||
+      (this.lastAction !== null && Math.random() < this.repeatActionProbability)
     ) {
       if (this.numRepeats === 0) {
         const [lower, upper] = this.repeatActionDuration;
-        this.numRepeats = Math.floor(Math.random() * (upper - lower + 1)) + lower;
+        this.numRepeats =
+          Math.floor(Math.random() * (upper - lower + 1)) + lower;
       }
       nextAction = this.lastAction as ActType;
       this.isStickyActions = true;
