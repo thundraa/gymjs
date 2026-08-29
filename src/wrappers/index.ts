@@ -6,6 +6,7 @@ import {
 } from './common';
 import { ClipReward } from './transform_reward';
 import { ClipAction, RescaleAction } from './transform_action';
+import { StickyAction } from './stateful_action';
 
 export {
   TimeLimit,
@@ -15,4 +16,5 @@ export {
   ClipReward,
   ClipAction,
   RescaleAction,
+  StickyAction,
 };
