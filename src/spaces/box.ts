@@ -90,7 +90,11 @@ export class Box extends Space<tf.Tensor> {
       unboundedAboveTensor = tf.neg(unboundedAboveTensor).add(high);
       sample = tf.where(boundedAboveOnly, unboundedAboveTensor, sample);
 
-      return sample.floor().asType(this.dtype);
+      if (this.dtype === 'int32') {
+        sample = sample.floor();
+      }
+
+      return sample.asType(this.dtype);
     });
   }
 

@@ -64,6 +64,24 @@ describe.each([
   }
 );
 
+describe('Test Sample is Floored Only for Integer Spaces', () => {
+  it('Float samples should not be floored', () => {
+    // No value in [0.3, 0.8) is an integer, so one sample is conclusive
+    const sample = new Box(0.3, 0.8, [1], 'float32').sample();
+
+    expect(Number.isInteger(Array.from(sample.dataSync())[0])).toBe(false);
+  });
+
+  it('Integer samples should be floored', () => {
+    const sample = new Box(0, 1, [1], 'int32').sample();
+    const value = Array.from(sample.dataSync())[0];
+
+    expect(Number.isInteger(value)).toBe(true);
+    expect(value).toBeGreaterThanOrEqual(0);
+    expect(value).toBeLessThanOrEqual(1);
+  });
+});
+
 describe('Test Contains All Elements', () => {
   const space = new Box(0, 1, [2], 'float32');
 
