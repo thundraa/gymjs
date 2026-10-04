@@ -410,5 +410,11 @@ export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
 }
 
 function angleNormalize(x: number): number {
-  return ((x + Math.PI) % (2 * Math.PI)) - Math.PI;
+  let result = (x + Math.PI) % (2 * Math.PI);
+
+  // In JavaScript and TypeScript, % is a remainder operator, not a mathematical modulo operator
+  if (result < 0) {
+    result += 2 * Math.PI;
+  }
+  return result - Math.PI;
 }
