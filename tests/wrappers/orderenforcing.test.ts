@@ -6,7 +6,7 @@ import { Box } from '../../src/spaces/box';
 import { OrderEnforcing } from '../../src/wrappers';
 
 class ExampleEnv extends Env<tf.Tensor, tf.Tensor> {
-  private count: number;
+  private count = 0;
   constructor() {
     const observationSpace = new Box(0, 3, [1], 'int32');
     const actioSpace = new Box(0, 1, [1], 'float32');

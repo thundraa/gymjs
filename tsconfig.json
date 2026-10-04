@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "lib": ["dom"]
   },
-  "include": ["src", "test", "tsdown.config.ts"],
+  "include": ["src", "tests", "tsdown.config.ts"],
   "exclude": ["node_modules", "dist"],
   "removeComments": true,
   "newLine": "lf"
