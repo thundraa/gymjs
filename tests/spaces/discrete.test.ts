@@ -18,6 +18,14 @@ describe('Test Contain', () => {
 
     expect.assert(space.contains(sample));
   });
+
+  it('Should not contain non-integer values', () => {
+    const space = new Discrete(3);
+
+    expect(space.contains(2)).toBe(true);
+    expect(space.contains(1.5)).toBe(false);
+    expect(space.contains(NaN)).toBe(false);
+  });
 });
 
 describe('Test Equality', () => {

@@ -53,6 +53,10 @@ export class Discrete extends Space<number> {
       return false;
     }
 
+    if (!Number.isInteger(x)) {
+      return false;
+    }
+
     if (x >= this.start && x < this.start + this.n) {
       return true;
     }
