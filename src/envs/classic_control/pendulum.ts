@@ -120,10 +120,6 @@ export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
       throw Error(`Action invalid`);
     }
 
-    if (this.createWindowPromise !== null) {
-      await this.createWindowPromise;
-    }
-
     let [theta, thetaDot] = this.state;
 
     action = tf.clipByValue(
@@ -165,6 +161,10 @@ export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
    * Renders the environment on the canvas.
    */
   async render(): Promise<void | tf.Tensor> {
+    if (this.createWindowPromise !== null) {
+      await this.createWindowPromise;
+    }
+
     if (this.renderMode === 'human') {
       this.draw(false);
     } else if (this.renderMode === 'rgb_array') {

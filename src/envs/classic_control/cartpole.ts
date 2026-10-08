@@ -126,10 +126,6 @@ export class CartPoleEnv extends Env<tf.Tensor, number> {
       throw Error(`Action invalid`);
     }
 
-    if (this.createWindowPromise !== null) {
-      await this.createWindowPromise;
-    }
-
     let [x, xDot, theta, thetaDot] = this.state;
     let force = action - 0.5 > 0 ? CartPoleEnv.forceMag : -CartPoleEnv.forceMag;
     const costheta = Math.cos(theta);
@@ -198,6 +194,10 @@ export class CartPoleEnv extends Env<tf.Tensor, number> {
    * Renders the environment on the canvas.
    */
   async render(): Promise<void | tf.Tensor> {
+    if (this.createWindowPromise !== null) {
+      await this.createWindowPromise;
+    }
+
     if (this.renderMode === 'human') {
       this.draw(false);
     } else if (this.renderMode === 'rgb_array') {
