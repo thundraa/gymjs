@@ -370,7 +370,7 @@ export class PendulumEnv extends Env<tf.Tensor, tf.Tensor> {
     const height = PendulumEnv.screenDim;
     if (returnTensor) {
       const imageArray = ctx.getImageData(0, 0, width, height).data;
-      return tf.tensor(imageArray).reshape([width, height, 4]);
+      return tf.tensor(imageArray).reshape([height, width, 4]);
     }
 
     // Render to window on node js

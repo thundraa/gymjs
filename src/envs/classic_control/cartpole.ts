@@ -323,7 +323,7 @@ export class CartPoleEnv extends Env<tf.Tensor, number> {
     const height = CartPoleEnv.screenHeight;
     if (returnTensor) {
       const imageArray = ctx.getImageData(0, 0, width, height).data;
-      return tf.tensor(imageArray).reshape([width, height, 4]);
+      return tf.tensor(imageArray).reshape([height, width, 4]);
     }
 
     // Render to window on node js
