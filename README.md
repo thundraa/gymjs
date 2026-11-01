@@ -102,7 +102,7 @@ class Walker extends gym.Env {
 }
 
 const walker = new Walker(); // Create an instance of the environment
-const limitedWalker = new gym.spaces.TimeLimit(walker, 30); // Automatically truncate the environment after 30 steps if the environment hasn't terminated already
+const limitedWalker = new gym.wrappers.TimeLimit(walker, 30); // Automatically truncate the environment after 30 steps if the environment hasn't terminated already
 ```
 
 **Disclaimer:** The project is still in its initial stages; expect a lot of bugs. The API is subject to change.
