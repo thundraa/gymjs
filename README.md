@@ -1,6 +1,21 @@
-# Gymjs
+# gymjs
 
-Gymjs is an open source JS library for developing environments for reinforcement learning by providing a standard API, similar to Python's gym, and a couple of compliant environments like Cartpole and Pendulum.
+[![Package](https://img.shields.io/npm/v/gymjs)](https://www.npmjs.com/package/gymjs)
+[![Dependencies](https://img.shields.io/librariesio/release/npm/gymjs)](https://libraries.io/npm/gymjs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Reinforcement learning environments for JavaScript and TypeScript.
+Provides an API modeled after Python's [Gymnasium](https://gymnasium.farama.org), with typed environments, observation and action spaces, composable wrappers, and a couple of classic-control environments:
+
+- 🤖 Standard `Env` and `Wrapper` API
+- 📦 Observation and action spaces
+- 🧩 Composable wrappers
+- 🎮 CartPole and Pendulum environments
+- 🖼 Rendering to SDL windows or browser canvases
+- 🧮 Most observations and actions are [`@tensorflow/tfjs`](https://www.npmjs.com/package/@tensorflow/tfjs) tensors; discrete spaces and CartPole actions use plain numbers
+
+Environments expose the familiar `reset()`, `step()`, `render()` and `close()` interface.
+Unlike the Python version, `reset()` is synchronous and `step()` returns a `Promise`.
 
 ## Installation
 
@@ -8,54 +23,40 @@ Gymjs is an open source JS library for developing environments for reinforcement
 npm install gymjs
 ```
 
-## API
+`@tensorflow/tfjs` is installed automatically as a dependency.
+The native rendering libraries [`@kmamal/sdl`](https://www.npmjs.com/package/@kmamal/sdl) and [`@napi-rs/canvas`](https://www.npmjs.com/package/@napi-rs/canvas) are optional dependencies and are only loaded when rendering on Node.js.
 
-Gymjs's API is very similar to that of gymnasium. Python code for running CartPole's environment:
+## Examples
 
-```py
-import gymnasium as gym
-env = gym.make("CartPole-v1")
-
-observation, info = env.reset(seed=42)
-for _ in range(1000):
-    action = env.action_space.sample()
-    observation, reward, terminated, truncated, info = env.step(action)
-
-    if terminated or truncated:
-        observation, info = env.reset()
-env.close()
-```
-
-Equivalent gymjs code:
+### "Hello, World!"
 
 ```ts
 import * as gym from 'gymjs';
+
 const env = new gym.envs.classic_control.CartPoleEnv();
 
 let [observation, info] = env.reset();
 for (let i = 0; i < 1000; i++) {
-  let action = env.actionSpace.sample();
-  let [observation, reward, terminated, truncated, info] =
-    await env.step(action);
+  const action = env.actionSpace.sample();
+  const [obs, reward, terminated, truncated, stepInfo] = await env.step(action);
 
   if (terminated || truncated) {
-    let [observation, info] = env.reset();
+    [observation, info] = env.reset();
   }
 }
 env.close();
 ```
 
-## Environment Example
-
-An example implementation of an environment:
+### Custom environment
 
 ```ts
 import * as tf from '@tensorflow/tfjs';
 import * as gym from 'gymjs';
 
-class Walker extends gym.Env {
+class Walker extends gym.Env<tf.Tensor, tf.Tensor> {
   agent: tf.Tensor;
   goal: tf.Tensor;
+
   constructor() {
     const actionSpace = new gym.spaces.Box(0, 1, [2], 'float32');
     const observationSpace = new gym.spaces.Box(0, 1, [4], 'float32');
@@ -75,9 +76,7 @@ class Walker extends gym.Env {
 
   async step(
     action: tf.Tensor
-  ): Promise<
-    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
-  > {
+  ): Promise<[tf.Tensor, number, boolean, boolean, null]> {
     if (!this.actionSpace.contains(action)) {
       throw Error('Action not in action space.');
     }
@@ -86,601 +85,1105 @@ class Walker extends gym.Env {
     const obs = this.agent.concat(this.goal);
     const distance = this.agent.sub(this.goal).norm().asScalar().dataSync()[0];
     const reward = -distance;
-
-    let done = distance < 0.01;
+    const done = distance < 0.01;
 
     return [obs, reward, done, false, null];
+  }
+
+  render(): Promise<void> {
+    return Promise.resolve();
   }
 
   close(): void {
     return;
   }
-
-  async render(): Promise<void> {
-    return;
-  }
 }
 
-const walker = new Walker(); // Create an instance of the environment
-const limitedWalker = new gym.wrappers.TimeLimit(walker, 30); // Automatically truncate the environment after 30 steps if the environment hasn't terminated already
+const walker = new Walker();
+// Automatically truncate the environment after 30 steps if it hasn't
+// terminated already
+const limitedWalker = new gym.wrappers.TimeLimit(walker, 30);
 ```
 
-**Disclaimer:** The project is still in its initial stages; expect a lot of bugs. The API is subject to change.
+### Rendering
 
-## Contents
+Rendering is enabled by passing a render mode to the environment constructor.
 
-- [gymjs.Env](#gymjssrcoreenv)
-- [gymjs.Wrapper](#gymjssrcorewrapper)
-- [gymjs.ObservationWrapper](#gymjssrcoreobservationwrapper)
-- [gymjs.ActionWrapper](#gymjssrcoreactionwrapper)
-- [gymjs.RewardWrapper](#gymjssrcorerewardwrapper)
-- [gymjs.spaces](#gymjsspacesspace)
-  - [Space](#space)
-  - [Box](#box)
-  - [Discrete](#discrete)
-  - [MultiDiscrete](#multidiscrete)
-  - [MultiBinary](#multibinary)
-  - [Dict](#dict)
-  - [Tuple](#tuple)
-- [gymjs.wrappers](#gymjsswrapperswrapper)
-  - [TimeLimit](#timelimit)
-  - [Autoreset](#autoreset)
-  - [OrderEnforcing](#orderenforcing)
-  - [RecordEpisodeStatistics](#recordepisodestatistics)
-  - [ClipReward](#clipreward)
-  - [ClipAction](#clipaction)
-  - [RescaleAction](#rescaleaction)
-  - [StickyAction](#stickyaction)
-- [gymjs.envs](#gymjssenvsenv)
-  - [classic_control.CartPoleEnv](#classic_controlcartpoleenv)
-  - [classic_control.PendulumEnv](#classic_controlpendulumenv)
+```ts
+import * as gym from 'gymjs';
+
+const env = new gym.envs.classic_control.CartPoleEnv(false, 'human');
+
+let [observation] = env.reset();
+for (let i = 0; i < 500; i++) {
+  const [, , terminated, truncated] = await env.step(env.actionSpace.sample());
+
+  if (terminated || truncated) {
+    [observation] = env.reset();
+  }
+}
+env.close();
+```
+
+The `'rgb_array'` mode returns the current frame instead of displaying it:
+
+```ts
+const env = new gym.envs.classic_control.PendulumEnv(10.0, 'rgb_array');
+env.reset();
+
+const frame = await env.render(); // tf.Tensor with shape [500, 500, 4]
+```
+
+In browsers, a canvas must be supplied when rendering is enabled:
+
+```ts
+const canvas = document.querySelector('canvas')!;
+const env = new gym.envs.classic_control.CartPoleEnv(false, 'human', canvas);
+```
 
 # API Reference
 
-## gymjs.Env
+## Contents
 
-An abstract class that represents the structure of an environment.
+- [class Env](#class-env)
+  - [new Env(actionSpace, observationSpace, renderMode)](#new-envactionspace-observationspace-rendermode)
+  - [env.actionSpace](#envactionspace)
+  - [env.observationSpace](#envobservationspace)
+  - [env.renderMode](#envrendermode)
+  - [env.unwrapped](#envunwrapped)
+  - [env.reset([options])](#envresetoptions)
+  - [env.step(action)](#envstepaction)
+  - [env.render()](#envrender)
+  - [env.close()](#envclose)
+- [class Wrapper](#class-wrapper)
+  - [new Wrapper(env)](#new-wrapperenv)
+  - [wrapper.env](#wrapperenv)
+  - [wrapper.actionSpace](#wrapperactionspace)
+  - [wrapper.observationSpace](#wrapperobservationspace)
+  - [wrapper.unwrapped](#wrapperunwrapped)
+  - [wrapper.reset([options])](#wrapperresetoptions)
+  - [wrapper.step(action)](#wrapperstepaction)
+  - [wrapper.render()](#wrapperrender)
+  - [wrapper.close()](#wrapperclose)
+- [class ObservationWrapper](#class-observationwrapper)
+  - [observationWrapper.observationTransform(obs)](#observationwrapperobservationtransformobs)
+- [class ActionWrapper](#class-actionwrapper)
+  - [actionWrapper.actionTransform(action)](#actionwrapperactiontransformaction)
+- [class RewardWrapper](#class-rewardwrapper)
+  - [rewardWrapper.rewardTransform(reward)](#rewardwrapperrewardtransformreward)
+- [class Space](#class-space)
+  - [new Space(shape, dtype)](#new-spaceshape-dtype)
+  - [space.shape](#spaceshape)
+  - [space.dtype](#spacedtype)
+  - [space.sample()](#spacesample)
+  - [space.contains(x)](#spacecontainsx)
+  - [space.equals(other)](#spaceequalsother)
+- [class Box](#class-box)
+  - [new Box(low, high, shape, dtype)](#new-boxlow-high-shape-dtype)
+  - [box.low](#boxlow)
+  - [box.high](#boxhigh)
+  - [box.sample()](#boxsample)
+  - [box.contains(x)](#boxcontainsx)
+  - [box.equals(other)](#boxequalsother)
+- [class Discrete](#class-discrete)
+  - [new Discrete(n[, start])](#new-discreten-start)
+  - [discrete.n](#discreten)
+  - [discrete.start](#discretestart)
+  - [discrete.sample()](#discretesample)
+  - [discrete.contains(x)](#discretecontainsx)
+  - [discrete.equals(other)](#discreteequalsother)
+- [class MultiDiscrete](#class-multidiscrete)
+  - [new MultiDiscrete(nVec[, start])](#new-multidiscretenvec-start)
+  - [multiDiscrete.nVec](#multidiscretenvec)
+  - [multiDiscrete.start](#multidiscretestart)
+  - [multiDiscrete.sample()](#multidiscretesample)
+  - [multiDiscrete.contains(x)](#multidiscretecontainsx)
+  - [multiDiscrete.equals(other)](#multidiscreteequalsother)
+- [class MultiBinary](#class-multibinary)
+  - [new MultiBinary(n)](#new-multibinaryn)
+  - [multiBinary.n](#multibinaryn)
+  - [multiBinary.sample()](#multibinarysample)
+  - [multiBinary.contains(x)](#multibinarycontainsx)
+  - [multiBinary.equals(other)](#multibinaryequalsother)
+- [class Dict](#class-dict)
+  - [new Dict(spaces)](#new-dictspaces)
+  - [dict.spaces](#dictspaces)
+  - [dict.sample()](#dictsample)
+  - [dict.contains(x)](#dictcontainsx)
+  - [dict.equals(other)](#dictequalsother)
+- [class Tuple](#class-tuple)
+  - [new Tuple(spaces)](#new-tuplespaces)
+  - [tuple.spaces](#tuplespaces)
+  - [tuple.sample()](#tuplesample)
+  - [tuple.contains(x)](#tuplecontainsx)
+  - [tuple.equals(other)](#tupleequalsother)
+- [class TimeLimit](#class-timelimit)
+  - [new TimeLimit(env, maxEpisodeSteps)](#new-timelimitenv-maxepisodesteps)
+  - [timeLimit.reset([options])](#timelimitresetoptions)
+  - [timeLimit.step(action)](#timelimitstepaction)
+- [class Autoreset](#class-autoreset)
+  - [new Autoreset(env)](#new-autoresetenv)
+  - [autoreset.reset([options])](#autoresetresetoptions)
+  - [autoreset.step(action)](#autoresetstepaction)
+- [class OrderEnforcing](#class-orderenforcing)
+  - [new OrderEnforcing(env[, disableRenderOrderEnforcing])](#new-orderenforcingenv-disablerenderorderenforcing)
+  - [orderEnforcing.reset([options])](#orderenforcingresetoptions)
+  - [orderEnforcing.step(action)](#orderenforcingstepaction)
+  - [orderEnforcing.render()](#orderenforcingrender)
+  - [orderEnforcing.hasReseted](#orderenforcinghasreseted)
+- [class RecordEpisodeStatistics](#class-recordepisodestatistics)
+  - [new RecordEpisodeStatistics(env[, statsKey])](#new-recordepisodestatisticsenv-statskey)
+  - [recordEpisodeStatistics.reset([options])](#recordepisodestatisticsresetoptions)
+  - [recordEpisodeStatistics.step(action)](#recordepisodestatisticsstepaction)
+- [class ClipReward](#class-clipreward)
+  - [new ClipReward(env, minReward, maxReward)](#new-cliprewardenv-minreward-maxreward)
+  - [clipReward.rewardTransform(reward)](#cliprewardrewardtransformreward)
+- [class ClipAction](#class-clipaction)
+  - [new ClipAction(env)](#new-clipactionenv)
+  - [clipAction.actionTransform(action)](#clipactionactiontransformaction)
+- [class RescaleAction](#class-rescaleaction)
+  - [new RescaleAction(env, minAction, maxAction)](#new-rescaleactionenv-minaction-maxaction)
+  - [rescaleAction.actionTransform(action)](#rescaleactionactiontransformaction)
+- [class StickyAction](#class-stickyaction)
+  - [new StickyAction(env, repeatActionProbability[, repeatActionDuration])](#new-stickyactionenv-repeatactionprobability-repeatactionduration)
+  - [stickyAction.actionTransform(action)](#stickyactionactiontransformaction)
+- [class CartPoleEnv](#class-cartpoleenv)
+  - [new CartPoleEnv(suttonBartoReward[, renderMode[, canvas]])](#new-cartpoleenvsuttonbartoreward-rendermode-canvas)
+  - [cartPoleEnv.reset()](#cartpoleenvreset)
+  - [cartPoleEnv.step(action)](#cartpoleenvstepaction)
+  - [cartPoleEnv.render()](#cartpoleenvrender)
+  - [cartPoleEnv.close()](#cartpoleenvclose)
+  - [CartPoleEnv constants](#cartpoleenv-constants)
+- [class PendulumEnv](#class-pendulumenv)
+  - [new PendulumEnv(g[, renderMode[, canvas]])](#new-pendulumenvg-rendermode-canvas)
+  - [pendulumEnv.reset()](#pendulumenvreset)
+  - [pendulumEnv.step(action)](#pendulumenvstepaction)
+  - [pendulumEnv.render()](#pendulumenvrender)
+  - [pendulumEnv.close()](#pendulumenvclose)
+  - [PendulumEnv constants](#pendulumenv-constants)
+- [Rendering](#rendering)
+  - [Render modes](#render-modes)
+  - [Canvas](#canvas)
+  - [Optional dependencies](#optional-dependencies)
+  - [Frame timing](#frame-timing)
 
-### gymjs.Env(actionSpace, observationSpace, renderMode)
+## class Env
 
-- `actionSpace: <Space>` The action space of the environment.
-- `observationSpace: <Space>` The observation space of the environment.
-- `renderMode: <string>|<null>` The render mode of the environment.
+`Env` is the abstract base class for all environments.
+It is generic over the observation and action types:
 
-Constructor for an environment.
+```ts
+class MyEnv extends gym.Env<ObsType, ActType> {
+  // ...
+}
+```
+
+Subclasses must implement [`reset()`](#envresetoptions), [`step()`](#envstepaction), [`render()`](#envrender) and [`close()`](#envclose), and must call `super()` with an action space, an observation space, and a render mode.
+
+### new Env(actionSpace, observationSpace, renderMode)
+
+- `actionSpace: `[`<Space>`](#class-space) The action space of the environment.
+- `observationSpace: `[`<Space>`](#class-space) The observation space of the environment.
+- `renderMode: <string>|<null>` The render mode. Use `null` to disable rendering.
+- Returns: `<Env>` the new environment.
+
+Creates the base part of an environment.
+Prefer extending this class rather than instantiating it directly.
+
+### env.actionSpace
+
+- [`<Space>`](#class-space)
+
+The action space of the environment.
+
+### env.observationSpace
+
+- [`<Space>`](#class-space)
+
+The observation space of the environment.
+
+### env.renderMode
+
+- `<string>|<null>`
+
+The render mode of the environment.
+Possible values used by the built-in environments are `null`, `'human'`, and `'rgb_array'`.
+See [Render modes](#render-modes).
+
+### env.unwrapped
+
+- [`<Env>`](#class-env)
+
+The innermost environment.
+For a plain `Env` this is the environment itself.
+For a wrapper this delegates to the wrapped environment's `unwrapped` property.
 
 ### env.reset([options])
 
-- `options: <object>` Additional information to specify how the environment resets.
-- Returns: `[<ObsType>, <Record<string, any> | null>]` An array of the observation of the initial state and info.
+- `options: <object>` Additional information specifying how the environment resets. Optional.
+- Returns: `[<ObsType>, <Record<string, any>>|<null>]` the initial observation and an info object.
 
-Resets the environment.
+Resets the environment to its initial state.
+This method is synchronous and returns the observation directly (not a promise).
 
 ### env.step(action)
 
 - `action: <ActType>` The action to take in the environment.
-- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any> | null]>` A tuple of the observation, reward, termination, truncation and info.
+- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any>>|<null>]>` a tuple of observation, reward, termination, truncation, and info.
 
 Takes one step in the environment.
+The result tuple follows the Gymnasium convention:
+
+| Position | Meaning                                                           |
+| -------- | ----------------------------------------------------------------- |
+| `0`      | The observation of the new state.                                 |
+| `1`      | The reward produced by the action.                                |
+| `2`      | `terminated`: `true` if the episode reached a terminal state.     |
+| `3`      | `truncated`: `true` if the episode was cut short by a step limit. |
+| `4`      | An info object, or `null`.                                        |
 
 ### env.render()
 
-- Returns: `Promise<void | tf.Tensor>` Either no return or an array of the screen of the environment.
+- Returns: `Promise<void | tf.Tensor>` nothing in `'human'` mode, or the current frame in `'rgb_array'` mode.
 
-Renders the environment graphically.
+Renders the environment.
+See [Rendering](#rendering).
 
 ### env.close()
 
-Closes the environment.
+Closes the environment and releases any resources, such as native windows.
 
-### env.unwrapped
+## class Wrapper
 
-- Returns: `Env` The unwrapped environment.
+`Wrapper` is the abstract base class for environment wrappers.
+A wrapper delegates to an inner environment, changing or adding behavior while keeping the same interface.
 
-## gymjs.Wrapper
+```ts
+class MyWrapper extends gym.Wrapper<ObsType, ActType, ObsType, ActType> {
+  // ...
+}
+```
 
-A wrapper around an environment, meant to change/add the behaviour or functionality.
+The type parameters are, in order: the wrapper's observation type, the wrapper's action type, the inner environment's observation type, and the inner environment's action type.
 
-### gymjs.Wrapper(env)
+### new Wrapper(env)
 
-- `env: <Env>` The environment to wrap.
+- `env: `[`<Env>`](#class-env) The environment to wrap.
+- Returns: `<Wrapper>` the new wrapper.
 
-### wrapper.reset([options])
+### wrapper.env
 
-- `options: <object>` Additional information to specify how the environment resets.
-- Returns: `[<WrapperObsType>, <Record<string, any> | null>]` An array of the observation of the initial state and info.
+- [`<Env>`](#class-env)
 
-Resets the wrapper.
-
-### wrapper.step(action)
-
-- `action: <WrapperActType>` The action to take in the environment.
-- Returns: `Promise<[<WrapperObsType>, <number>, <boolean>, <boolean>, <Record<string, any> | null]>` A tuple of the observation, reward, termination, truncation and info.
-
-Takes one step in the wrapper.
-
-### wrapper.render()
-
-- Returns: `Promise<void | tf.Tensor>` Either no return or an array of the screen of the environment.
-
-Renders the wrapper graphically.
-
-### wrapper.close()
-
-Closes the environment.
-
-### wrapper.unwrapped
-
-- Returns: `Env` The unwrapped environment.
+The wrapped environment.
 
 ### wrapper.actionSpace
 
-- Type: `Space<WrapperActType>`
+- [`<Space>`](#class-space)
 
-The action space of the wrapper.
+The action space exposed by the wrapper.
+By default this is the wrapped environment's action space, but subclasses may assign a different value.
 
 ### wrapper.observationSpace
 
-- Type: `Space<WrapperObsType>`
+- [`<Space>`](#class-space)
 
-The observation space of the wrapper.
+The observation space exposed by the wrapper.
+By default this is the wrapped environment's observation space, but subclasses may assign a different value.
 
-## gymjs.ObservationWrapper
+### wrapper.unwrapped
 
-A specific wrapper that only makes changes to the observation.
+- [`<Env>`](#class-env)
 
-### gymjs.ObservationWrapper(env)
+The innermost wrapped environment.
 
-- `env: <Env>` The environment to wrap.
+### wrapper.reset([options])
 
-### wrapper.observationTransform(obs)
+- `options: <object>` Additional information specifying how the environment resets. Optional.
+- Returns: `[<ObsType>, <Record<string, any>>|<null>]` the initial observation and info.
 
-- `obs: <ObsType>` The original observation to change.
-- Returns: `<WrapperObsType>` The transformed observation.
+Delegates to the wrapped environment's [`reset()`](#envresetoptions).
 
-Makes changes to the observation of the environment.
+### wrapper.step(action)
 
-## gymjs.ActionWrapper
+- `action: <ActType>` The action to take in the environment.
+- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any>>|<null>]>` the step result.
 
-A specific wrapper that only makes changes to the actions.
+Delegates to the wrapped environment's [`step()`](#envstepaction).
 
-### gymjs.ActionWrapper(env)
+### wrapper.render()
 
-- `env: <Env>` The environment to wrap.
+- Returns: `Promise<void | tf.Tensor>`
 
-### wrapper.actionTransform(action)
+Delegates to the wrapped environment's [`render()`](#envrender).
 
-- `action: <WrapperActType>` The original action to change.
-- Returns: `<ActType>` The transformed action.
+### wrapper.close()
 
-Makes changes to the actions of the environment.
+Delegates to the wrapped environment's [`close()`](#envclose).
 
-## gymjs.RewardWrapper
+## class ObservationWrapper
 
-A specific wrapper that only makes changes to the rewards.
+An `ObservationWrapper` is a [`Wrapper`](#class-wrapper) that only transforms observations.
+`reset()` and `step()` apply [`observationTransform()`](#observationwrapperobservationtransformobs) to the observation returned by the inner environment.
 
-### gymjs.RewardWrapper(env)
+```ts
+class ScaleObservation extends gym.ObservationWrapper<
+  tf.Tensor,
+  tf.Tensor,
+  number
+> {
+  observationTransform(obs: tf.Tensor): tf.Tensor {
+    return obs.mul(2);
+  }
+}
+```
 
-- `env: <Env>` The environment to wrap.
+### observationWrapper.observationTransform(obs)
 
-### wrapper.rewardTransform(reward)
+- `obs: <ObsType>` The original observation.
+- Returns: `<WrapperObsType>` the transformed observation.
 
-- `reward: <number>` The original reward to change.
-- Returns: `<number>` The transformed reward.
+Abstract method that subclasses must implement.
+It is called on every observation, both from `reset()` and `step()`.
 
-Makes changes to the rewards of the environment.
+## class ActionWrapper
 
-## gymjs.spaces
+An `ActionWrapper` is a [`Wrapper`](#class-wrapper) that only transforms actions.
+[`step()`](#wrapperstepaction) applies [`actionTransform()`](#actionwrapperactiontransformaction) before passing the action to the inner environment.
 
-### Space
+```ts
+class ShiftAction extends gym.ActionWrapper<number, tf.Tensor, number> {
+  actionTransform(action: number): number {
+    return action + 1;
+  }
+}
+```
 
-An abstract class that represents the structure of a space.
+### actionWrapper.actionTransform(action)
 
-#### Space(shape, dtype)
+- `action: <WrapperActType>` The action supplied by the caller.
+- Returns: `<ActType>` the action to pass to the inner environment.
 
-- `shape: <number[]>` The dimensions of the space.
-- `dtype: <tf.DataType>` The datatype of the space.
+Abstract method that subclasses must implement.
 
-#### space.sample()
+## class RewardWrapper
 
-- Returns: `<T>` A tensor or number that is acceptable in the space.
+A `RewardWrapper` is a [`Wrapper`](#class-wrapper) that only transforms rewards.
+[`step()`](#wrapperstepaction) applies [`rewardTransform()`](#rewardwrapperrewardtransformreward) to the reward returned by the inner environment.
 
-Returns a sample of the space.
+```ts
+class DoubleReward extends gym.RewardWrapper<tf.Tensor, number> {
+  rewardTransform(reward: number): number {
+    return reward * 2;
+  }
+}
+```
 
-#### space.contains(x)
+### rewardWrapper.rewardTransform(reward)
+
+- `reward: <number>` The original reward.
+- Returns: `<number>` the transformed reward.
+
+Abstract method that subclasses must implement.
+
+## class Space
+
+`Space` is the abstract base class for observation and action spaces.
+
+```ts
+class MySpace extends gym.spaces.Space<number> {
+  sample(): number {
+    return 0;
+  }
+
+  contains(x: any): boolean {
+    return x === 0;
+  }
+
+  equals(other: gym.spaces.Space<any>): boolean {
+    return other instanceof MySpace;
+  }
+}
+```
+
+### new Space(shape, dtype)
+
+- `shape: <number>[]` The dimensions of the space.
+- `dtype: <tf.DataType>` The data type of elements in the space, for example `'float32'` or `'int32'`.
+- Returns: `<Space>` the new space.
+
+### space.shape
+
+- `<number>[]`
+
+The dimensions of the space.
+An empty array means a scalar space.
+
+### space.dtype
+
+- `<tf.DataType>`
+
+The data type of the space.
+
+### space.sample()
+
+- Returns: `<T>` a random value from the space.
+
+Abstract method that returns a value contained in the space.
+
+### space.contains(x)
 
 - `x: <any>` The value to check.
-- Returns: `<boolean>` A boolean that specifies if the value is in the space.
+- Returns: `<boolean>` `true` if the value is a member of the space.
 
-Determines whether a value is in the space or not.
+Abstract method that checks whether a value belongs to the space.
 
-#### space.equals(other)
+### space.equals(other)
 
-- `other: <Space<any>>` The space to compare with.
-- Returns: `<boolean>` A boolean that specifies if the two spaces are the same.
+- `other: `[`<Space>`](#class-space) The space to compare against.
+- Returns: `<boolean>` `true` if the two spaces are the same.
 
-Determines if the two spaces are the same.
+Abstract method that checks whether two spaces have the same structure and bounds.
 
-### Box
+## class Box
 
-Box is the representation of the Cartesian product of n closed intervals.
+A `Box` represents the Cartesian product of closed intervals.
+It is typically used for continuous observations and actions.
+The sample is a [`tf.Tensor`](https://js.tensorflow.org/api/latest/#class:Tensor).
 
-#### Box(low, high, shape, dtype)
+### new Box(low, high, shape, dtype)
 
-- `low: <tf.Tensor | number>` The lower bound for the value.
-- `high: <tf.Tensor | number>` The upper bound for the value.
-- `shape: <number[]>` The dimensions of the space.
-- `dtype: <tf.DataType>` The datatype of the space.
+- `low: <tf.Tensor>|<number>` The lower bound. A number is broadcast to every element.
+- `high: <tf.Tensor>|<number>` The upper bound. A number is broadcast to every element.
+- `shape: <number>[]` The shape of the space.
+- `dtype: <tf.DataType>` The data type of the space.
+- Returns: `<Box>` the new box space.
 
-#### box.sample()
+Throws if `low` or `high` do not have the requested shape, or if any element of `high` is lower than the corresponding element of `low`.
 
-- Returns: `<tf.Tensor>` A random tensor in the space range.
+```ts
+const space = new gym.spaces.Box(-1, 1, [2, 2], 'float32');
+```
 
-Gets a sample of the box space.
+### box.low
 
-#### box.contains(x)
+- `<tf.Tensor>`
+
+The lower bound of every element in the space.
+
+### box.high
+
+- `<tf.Tensor>`
+
+The upper bound of every element in the space.
+
+### box.sample()
+
+- Returns: `<tf.Tensor>` a random tensor in the space range.
+
+Samples each element from the corresponding interval.
+Infinite bounds are handled by sampling from a normal or exponential distribution, matching Gymnasium's behavior.
+Values are floored when the data type is `'int32'`.
+
+### box.contains(x)
 
 - `x: <any>` The value to check.
-- Returns: `<boolean>` A boolean that specifies if the value is in the space.
+- Returns: `<boolean>` `true` if `x` is a tensor with the same shape and type and every element is within `[low, high]`.
 
-Determines whether a value is in the space or not.
+### box.equals(other)
 
-#### box.equals(other)
+- `other: `[`<Space>`](#class-space) The space to compare against.
+- Returns: `<boolean>` `true` if both spaces are boxes with the same data type, shape, and bounds.
 
-- `other: <Space<any>>` The space to compare with.
-- Returns: `<boolean>` A boolean that specifies if the two boxes are the same.
+## class Discrete
 
-Determines if the two boxes are the same.
+A `Discrete` space contains a finite number of integers.
+The sample is a plain `number`.
 
-### Discrete
+### new Discrete(n[, start])
 
-A space consisting of finitely many elements.
-
-#### Discrete(n, start)
-
-- `n: <number>` The number of the discrete elements in the space.
+- `n: <number>` The number of elements in the space. Must be positive.
 - `start: <number>` The smallest element of the space. Default: `0`
+- Returns: `<Discrete>` the new discrete space.
 
-#### discrete.sample()
+Throws if `n` is not positive.
+The shape is always `[]` and the data type is always `'int32'`.
 
-- Returns: `<number>` A random integer in the space range.
+```ts
+const actionSpace = new gym.spaces.Discrete(4); // {0, 1, 2, 3}
+```
 
-Gets a sample of the discrete space.
+### discrete.n
 
-#### discrete.contains(x)
+- `<number>`
 
-- `x: <any>` The value to check.
-- Returns: `<boolean>` A boolean that specifies if the value is in the space.
+The number of elements in the space.
 
-Determines whether a value is in the space or not.
+### discrete.start
 
-#### discrete.equals(other)
+- `<number>`
 
-- `other: <Space<any>>` The space to compare with.
-- Returns: `<boolean>` A boolean that specifies if the two discrete are the same.
+The smallest element of the space.
 
-Determines if the two discrete are the same.
+### discrete.sample()
 
-### MultiDiscrete
+- Returns: `<number>` a random integer in `[start, start + n)`.
 
-MultiDiscrete is the representation of the Cartesian product of n discrete spaces.
-
-#### MultiDiscrete(nVec, start)
-
-- `nVec: <tf.Tensor>` The number of the discrete elements in each dimension of the space.
-- `start: <tf.Tensor | null>` The smallest element of the space in each dimension. Default: `null` (zeros)
-
-#### multiDiscrete.sample()
-
-- Returns: `<tf.Tensor>` A random tensor in the space range.
-
-Gets a sample of the multi discrete space.
-
-#### multiDiscrete.contains(x)
+### discrete.contains(x)
 
 - `x: <any>` The value to check.
-- Returns: `<boolean>` A boolean that specifies if the value is in the space.
+- Returns: `<boolean>` `true` if `x` is an integer in `[start, start + n)`.
 
-Determines whether a value is in the space or not.
+### discrete.equals(other)
 
-#### multiDiscrete.equals(other)
+- `other: `[`<Space>`](#class-space) The space to compare against.
+- Returns: `<boolean>` `true` if both spaces are discrete with the same `n` and `start`.
 
-- `other: <Space<any>>` The space to compare with.
-- Returns: `<boolean>` A boolean that specifies if the two multi discrete are the same.
+## class MultiDiscrete
 
-Determines if the two multi discrete are the same.
+A `MultiDiscrete` space is the Cartesian product of several discrete spaces.
+The sample is a [`tf.Tensor`](https://js.tensorflow.org/api/latest/#class:Tensor) with data type `'int32'`.
 
-### MultiBinary
+### new MultiDiscrete(nVec[, start])
 
-MultiBinary is the representation of n-shape binary space.
+- `nVec: <tf.Tensor>` The number of elements in each dimension. Must have data type `'int32'` and contain only positive values.
+- `start: <tf.Tensor>|<null>` The smallest element in each dimension. Default: a tensor of zeros with the same shape as `nVec`.
+- Returns: `<MultiDiscrete>` the new multi-discrete space.
 
-#### MultiBinary(n)
+Throws if `nVec` is not `'int32'`, if `start` does not have the same shape as `nVec`, or if any element of `nVec` is not positive.
+The shape of the space is `nVec.shape`.
 
-- `n: <number[] | number>` The number of binary elements in the space.
+```ts
+const space = new gym.spaces.MultiDiscrete(tf.tensor([2, 3, 4], [3], 'int32'));
+```
 
-#### multiBinary.sample()
+### multiDiscrete.nVec
 
-- Returns: `<tf.Tensor>` A random integer in the space range.
+- `<tf.Tensor>`
 
-Gets a sample of the multi binary space.
+The number of elements in each dimension.
 
-#### multiBinary.contains(x)
+### multiDiscrete.start
+
+- `<tf.Tensor>`
+
+The smallest element in each dimension.
+
+### multiDiscrete.sample()
+
+- Returns: `<tf.Tensor>` a random integer tensor where element `i` is in `[start[i], start[i] + nVec[i])`.
+
+### multiDiscrete.contains(x)
 
 - `x: <any>` The value to check.
-- Returns: `<boolean>` A boolean that specifies if the value is in the space.
+- Returns: `<boolean>` `true` if `x` is an `'int32'` tensor with the same shape as `nVec` and every element is within its dimension's range.
 
-Determines whether a value is in the space or not.
+### multiDiscrete.equals(other)
 
-#### multiBinary.equals(other)
+- `other: `[`<Space>`](#class-space) The space to compare against.
+- Returns: `<boolean>` `true` if both spaces have the same `nVec` and `start`.
 
-- `other: <Space<any>>` The space to compare with.
-- Returns: `<boolean>` A boolean that specifies if the two multi binary are the same.
+## class MultiBinary
 
-Determines if the two multi binary are the same.
+A `MultiBinary` space contains tensors whose elements are either `0` or `1`.
 
-### Dict
+### new MultiBinary(n)
 
-A dict of several spaces.
+- `n: <number>|<number>[]` The number of binary elements, or the shape of the space. Must be positive.
+- Returns: `<MultiBinary>` the new multi-binary space.
 
-#### Dict(spaces)
+If `n` is a number, the shape is `[n]`.
+If `n` is an array, the array is used as the shape.
+The data type is always `'int32'`.
 
-- `spaces: <Record<string, Space<any>>>` A record of spaces.
+```ts
+const space = new gym.spaces.MultiBinary([3, 2]);
+```
 
-#### dict.sample()
+### multiBinary.n
 
-- Returns: `<Record<string, any>>` A dict with samples from the dict spaces with corresponding keys.
+- `<number>|<number>[]`
 
-Gets a sample of the dict space.
+The value passed to the constructor.
 
-#### dict.contains(x)
+### multiBinary.sample()
 
-- `x: <Record<string, any>>` The value to check.
-- Returns: `<boolean>` A boolean that specifies if the value is in the space.
+- Returns: `<tf.Tensor>` a random tensor of zeros and ones with the space's shape.
 
-Determines whether a dict is in the space or not.
+### multiBinary.contains(x)
 
-#### dict.equals(other)
+- `x: <any>` The value to check.
+- Returns: `<boolean>` `true` if `x` is an `'int32'` tensor with the same shape whose elements are all `0` or `1`.
 
-- `other: <Space<any>>` The space to compare with.
-- Returns: `<boolean>` A boolean that specifies if the two spaces are the same.
+### multiBinary.equals(other)
 
-Determines if the two spaces are the same.
+- `other: `[`<Space>`](#class-space) The space to compare against.
+- Returns: `<boolean>` `true` if both spaces were created with the same `n`.
 
-### Tuple
+## class Dict
 
-A tuple of several spaces.
+A `Dict` space is a record of named spaces.
+The sample is a plain object whose keys match the space's keys.
 
-#### Tuple(spaces)
+### new Dict(spaces)
 
-- `spaces: <Space<any>[]>` An array of spaces.
+- `spaces: <Record<string, Space<any>>>` An object mapping names to spaces.
+- Returns: `<Dict>` the new dictionary space.
 
-#### tuple.sample()
+The shape is always `[]` and the data type is always `'string'`.
 
-- Returns: `<Space<any>[]>` A tuple with samples from the dict spaces with corresponding keys.
+```ts
+const space = new gym.spaces.Dict({
+  position: new gym.spaces.Box(-1, 1, [2], 'float32'),
+  velocity: new gym.spaces.Box(-10, 10, [2], 'float32'),
+});
+```
 
-Gets a sample of the tuple space.
+### dict.spaces
 
-#### tuple.contains(x)
+- `<Record<string, Space<any>>>`
 
-- `x: <any[]>` The value to check.
-- Returns: `<boolean>` A boolean that specifies if the value is in the space.
+The named spaces that make up the dictionary.
 
-Determines whether a tuple is in the space or not.
+### dict.sample()
 
-#### tuple.equals(other)
+- Returns: `<Record<string, any>>` an object with the same keys, where each value is a sample from the corresponding space.
 
-- `other: <Space<any>>` The space to compare with.
-- Returns: `<boolean>` A boolean that specifies if the two spaces are the same.
+### dict.contains(x)
 
-Determines if the two spaces are the same.
+- `x: <any>` The value to check.
+- Returns: `<boolean>` `true` if `x` is an object with exactly the same keys and each value is contained in its corresponding space.
 
-## gymjs.wrappers
+### dict.equals(other)
 
-### TimeLimit
+- `other: `[`<Space>`](#class-space) The space to compare against.
+- Returns: `<boolean>` `true` if both spaces have the same keys and each corresponding pair of spaces is equal.
 
-A wrapper that places a step limit on the environment.
+## class Tuple
 
-#### TimeLimit(env, maxEpisodeSteps)
+A `Tuple` space is an ordered collection of spaces.
+The sample is an array whose elements are samples from the constituent spaces.
 
-- `env: <Env>` The environment to wrap.
+### new Tuple(spaces)
+
+- `spaces: <Space<any>[]>` The spaces that make up the tuple.
+- Returns: `<Tuple>` the new tuple space.
+
+The shape is always `[]` and the data type is always `'string'`.
+
+```ts
+const space = new gym.spaces.Tuple([
+  new gym.spaces.Discrete(2),
+  new gym.spaces.Box(-1, 1, [2], 'float32'),
+]);
+```
+
+### tuple.spaces
+
+- `<Space<any>[]>`
+
+The spaces that make up the tuple.
+
+### tuple.sample()
+
+- Returns: `<any[]>` an array containing a sample from each constituent space.
+
+### tuple.contains(x)
+
+- `x: <any>` The value to check.
+- Returns: `<boolean>` `true` if `x` is an array with the same length and each element is contained in the corresponding space.
+
+### tuple.equals(other)
+
+- `other: `[`<Space>`](#class-space) The space to compare against.
+- Returns: `<boolean>` `true` if both spaces have the same length and each corresponding pair of spaces is equal.
+
+## class TimeLimit
+
+A wrapper that puts a maximum step count on an episode.
+
+### new TimeLimit(env, maxEpisodeSteps)
+
+- `env: `[`<Env>`](#class-env) The environment to wrap.
 - `maxEpisodeSteps: <number>` The maximum number of steps per episode.
+- Returns: `<TimeLimit>` the new wrapper.
 
-#### timeLimit.reset([options])
+### timeLimit.reset([options])
 
-- `options: <object>` Additional information to specify how the environment resets.
-- Returns: `[<ObsType>, <Record<string, any> | null>]` An array of the observation of the initial state and info.
+- `options: <object>` Options passed to the inner environment. Optional.
+- Returns: `[<ObsType>, <Record<string, any>>|<null>]` the reset result.
 
-Resets the wrapper.
+Resets the step counter and delegates to the inner environment's `reset()`.
 
-#### timeLimit.step(action)
+### timeLimit.step(action)
 
-- `action: <ActType>` The action to take in the environment.
-- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any> | null]>` A tuple of the observation, reward, termination, truncation and info.
+- `action: <ActType>` The action to take.
+- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any>>|<null>]>` the step result.
 
-Takes one step in the wrapper.
+Increments the step counter and sets `truncated` to `true` once `maxEpisodeSteps` has been reached.
 
-### Autoreset
+## class Autoreset
 
-A wrapper that resets the environment automatically once the environment finishes.
+A wrapper that automatically resets the inner environment after an episode ends.
+On the first step after a terminal step, the wrapper resets the environment and returns the initial observation with a reward of `0`, `terminated` and `truncated` both `false`, and the reset info.
 
-#### Autoreset(env)
+### new Autoreset(env)
 
-- `env: <Env>` The environment to wrap.
+- `env: `[`<Env>`](#class-env) The environment to wrap.
+- Returns: `<Autoreset>` the new wrapper.
 
-#### autoreset.reset([options])
+### autoreset.reset([options])
 
-- `options: <object>` Additional information to specify how the environment resets.
-- Returns: `[<ObsType>, <Record<string, any> | null>]` An array of the observation of the initial state and info.
+- `options: <object>` Options passed to the inner environment. Optional.
+- Returns: `[<ObsType>, <Record<string, any>>|<null>]` the reset result.
 
-Resets the wrapper.
+Clears the internal autoreset flag and delegates to the inner environment's `reset()`.
 
-#### autoreset.step(action)
+### autoreset.step(action)
 
-- `action: <ActType>` The action to take in the environment.
-- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any> | null]>` A tuple of the observation, reward, termination, truncation and info.
+- `action: <ActType>` The action to take.
+- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any>>|<null>]>` the step result.
 
-Takes one step in the wrapper.
+If the previous step ended the episode, the action is ignored, the environment is reset, and the initial observation is returned.
+Otherwise the action is passed to the inner environment.
 
-### OrderEnforcing
+## class OrderEnforcing
 
-A wrapper that enforces the correct order of the environment functions.
+A wrapper that enforces calling `reset()` before `step()` and `render()`.
 
-#### OrderEnforcing(env, disableRenderOrderEnforcing)
+### new OrderEnforcing(env[, disableRenderOrderEnforcing])
 
-- `env: <Env>` The environment to wrap.
-- `disableRenderOrderEnforcing: <boolean>` Whether to disable the render order enforcing. Default: `false`
+- `env: `[`<Env>`](#class-env) The environment to wrap.
+- `disableRenderOrderEnforcing: <boolean>` Set to `true` to allow calling `render()` before `reset()`. Default: `false`
+- Returns: `<OrderEnforcing>` the new wrapper.
 
-#### orderEnforcing.reset([options])
+### orderEnforcing.reset([options])
 
-- `options: <object>` Additional information to specify how the environment resets.
-- Returns: `[<ObsType>, <Record<string, any> | null>]` An array of the observation of the initial state and info.
+- `options: <object>` Options passed to the inner environment. Optional.
+- Returns: `[<ObsType>, <Record<string, any>>|<null>]` the reset result.
 
-Resets the wrapper.
+Marks the environment as reset and delegates to the inner environment's `reset()`.
 
-#### orderEnforcing.step(action)
+### orderEnforcing.step(action)
 
-- `action: <ActType>` The action to take in the environment.
-- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any> | null]>` A tuple of the observation, reward, termination, truncation and info.
+- `action: <ActType>` The action to take.
+- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any>>|<null>]>` the step result.
 
-Takes one step in the wrapper.
+Throws if `reset()` has not been called yet.
+Otherwise delegates to the inner environment's `step()`.
 
-#### orderEnforcing.render()
+### orderEnforcing.render()
 
-- Returns: `Promise<void | tf.Tensor>` Either no return or an array of the screen of the environment.
+- Returns: `Promise<void | tf.Tensor>`
 
-Renders the environment.
+Throws if `reset()` has not been called and render order enforcing is enabled.
+Otherwise delegates to the inner environment's `render()`.
 
-#### orderEnforcing.hasReseted
+### orderEnforcing.hasReseted
 
-- Type: `<boolean>`
+- `<boolean>`
 
-A boolean that specifies if the environment has been reset.
+Whether `reset()` has been called on this wrapper.
 
-### RecordEpisodeStatistics
+## class RecordEpisodeStatistics
 
-A wrapper that records the episode's statistics (episode length, cumulative reward and time elapsed since the beginning) in info with the stats_key as key to a record of rewards, length and time.
+A wrapper that records episode statistics and adds them to the info object when an episode ends.
 
-#### RecordEpisodeStatistics(env, statsKey)
+The statistics are stored in `info[statsKey]` as an object:
 
-- `env: <Env>` The environment to wrap.
-- `statsKey: <string>` The key to use for the episode statistics. Default: `'episode'`
+```ts
+{
+  rewards: number; // cumulative reward
+  length: number; // number of steps
+  time: number; // elapsed time in seconds
+}
+```
 
-#### recordEpisodeStatistics.reset([options])
+### new RecordEpisodeStatistics(env[, statsKey])
 
-- `options: <object>` Additional information to specify how the environment resets.
-- Returns: `[<ObsType>, <Record<string, any> | null>]` An array of the observation of the initial state and info.
+- `env: `[`<Env>`](#class-env) The environment to wrap.
+- `statsKey: <string>` The key under which the statistics are stored in `info`. Default: `'episode'`
+- Returns: `<RecordEpisodeStatistics>` the new wrapper.
 
-Resets the wrapper.
+### recordEpisodeStatistics.reset([options])
 
-#### recordEpisodeStatistics.step(action)
+- `options: <object>` Options passed to the inner environment. Optional.
+- Returns: `[<ObsType>, <Record<string, any>>|<null>]` the reset result.
 
-- `action: <ActType>` The action to take in the environment.
-- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any> | null]>` A tuple of the observation, reward, termination, truncation and info.
+Resets the accumulated return, episode length, and start time, then delegates to the inner environment's `reset()`.
 
-Takes one step in the wrapper.
+### recordEpisodeStatistics.step(action)
 
-### ClipReward
+- `action: <ActType>` The action to take.
+- Returns: `Promise<[<ObsType>, <number>, <boolean>, <boolean>, <Record<string, any>>|<null>]>` the step result.
 
-A wrapper that clips the reward to a specified range.
+Accumulates the reward and step count.
+When the episode is terminated or truncated, the statistics are added to `info` under `statsKey`.
+Throws if `info` already contains a value for `statsKey`.
 
-#### ClipReward(env, minReward, maxReward)
+## class ClipReward
 
-- `env: <Env>` The environment to wrap.
-- `minReward: <number | null>` The minimum reward. If `null`, only the maximum is enforced.
-- `maxReward: <number | null>` The maximum reward. If `null`, only the minimum is enforced.
+A [`RewardWrapper`](#class-rewardwrapper) that clips rewards to a range.
 
-### ClipAction
+### new ClipReward(env, minReward, maxReward)
 
-A wrapper that clips the action to the action space bounds.
+- `env: `[`<Env>`](#class-env) The environment to wrap.
+- `minReward: <number>|<null>` The minimum reward, or `null` for no lower bound.
+- `maxReward: <number>|<null>` The maximum reward, or `null` for no upper bound.
+- Returns: `<ClipReward>` the new wrapper.
 
-#### ClipAction(env)
+Throws if both bounds are `null`, or if `maxReward` is lower than `minReward`.
 
-- `env: <Env>` The environment to wrap. The action space must be a Box.
+### clipReward.rewardTransform(reward)
 
-### RescaleAction
+- `reward: <number>` The original reward.
+- Returns: `<number>` the clipped reward.
 
-A wrapper that rescales action space into a specified min and max, currently only works for finite numbers.
+## class ClipAction
 
-#### RescaleAction(env, minAction, maxAction)
+An [`ActionWrapper`](#class-actionwrapper) that clips actions to the inner environment's action space.
+This wrapper only works with a [`Box`](#class-box) action space.
 
-- `env: <Env>` The environment to wrap. The action space must be a Box.
-- `minAction: <number | tf.Tensor>` The minimum action.
-- `maxAction: <number | tf.Tensor>` The maximum action.
+### new ClipAction(env)
 
-### StickyAction
+- `env: `[`<Env>`](#class-env) The environment to wrap. Its action space must be a [`Box`](#class-box).
+- Returns: `<ClipAction>` the new wrapper.
 
-A wrapper that introduces sticky actions, where the previous action is repeated with a given probability for a given duration.
+Throws if the inner environment's action space is not a `Box`.
+The wrapper exposes a `Box` action space with the same shape and data type but with bounds `-Infinity` and `Infinity`.
 
-#### StickyAction(env, repeatActionProbability, repeatActionDuration)
+### clipAction.actionTransform(action)
 
-- `env: <Env>` The environment to wrap.
+- `action: <tf.Tensor>` The action to clip.
+- Returns: `<tf.Tensor>` the action with every element clipped to the inner action space's bounds.
+
+## class RescaleAction
+
+An [`ActionWrapper`](#class-actionwrapper) that linearly rescales actions from the inner environment's action space to a new range.
+This wrapper only works with a [`Box`](#class-box) action space with finite bounds.
+
+### new RescaleAction(env, minAction, maxAction)
+
+- `env: `[`<Env>`](#class-env) The environment to wrap. Its action space must be a [`Box`](#class-box).
+- `minAction: <number>|<tf.Tensor>` The minimum of the new action range. A number is broadcast to the action space's shape.
+- `maxAction: <number>|<tf.Tensor>` The maximum of the new action range. A number is broadcast to the action space's shape.
+- Returns: `<RescaleAction>` the new wrapper.
+
+Throws if the inner action space is not a `Box`, if `minAction` or `maxAction` do not have the same shape as the action space, or if `maxAction` is lower than `minAction` (via [`Box`](#class-box) validation).
+The inner action space must have finite bounds; infinite bounds are not currently supported.
+The wrapper exposes a `Box` action space with bounds `[minAction, maxAction]`.
+
+### rescaleAction.actionTransform(action)
+
+- `action: <tf.Tensor>` The action in the inner environment's range.
+- Returns: `<tf.Tensor>` the action mapped to `[minAction, maxAction]`.
+
+The mapping is affine:
+
+```text
+newAction = action * (maxAction - minAction) / (high - low)
+          + minAction - low * (maxAction - minAction) / (high - low)
+```
+
+where `low` and `high` are the inner action space's bounds.
+
+## class StickyAction
+
+An [`ActionWrapper`](#class-actionwrapper) that repeats the previous action with a given probability, for a random number of steps.
+
+### new StickyAction(env, repeatActionProbability[, repeatActionDuration])
+
+- `env: `[`<Env>`](#class-env) The environment to wrap.
 - `repeatActionProbability: <number>` The probability of repeating the previous action. Must be in `[0, 1)`.
-- `repeatActionDuration: <number | [number, number]>` The number of times to repeat the action. Default: `1`
+- `repeatActionDuration: <number>|<[number, number]>` How many times to repeat an action, or a lower and upper bound (inclusive) for a random duration. Must be integers greater than or equal to `1`. Default: `1`
+- Returns: `<StickyAction>` the new wrapper.
 
-## gymjs.envs
+Throws a `RangeError` if the probability is outside `[0, 1)` or the duration is out of range, and a `TypeError` if the duration is not an integer.
 
-### classic_control.CartPoleEnv
+### stickyAction.actionTransform(action)
 
-CartPole, an environment that corresponds to the version of the cart-pole problem described by Barto, Sutton, and Anderson. The Cartpole problem in reinforcement learning involves balancing a pole on a moving cart along a track, where the agent must learn to keep the pole upright by choosing to move the cart left or right based on the state of the system.
+- `action: <ActType>` The action supplied by the caller.
+- Returns: `<ActType>` either `action` or the previous action.
 
-#### CartPoleEnv(suttonBartoReward, renderMode, canvas)
+Once a repeat is triggered, the previous action is repeated for the sampled duration before new actions are accepted again.
+The wrapper uses `Math.random()` because seeding is not implemented yet.
 
-- `suttonBartoReward: <boolean>` If `True` the reward function matches the original sutton barto implementation. Default: `false`
-- `renderMode: <'human' | 'rgb_array' | null>` Specify the render mode, `null` means no rendering and `'human'` means rendering on a canvas. Default: `null`
-- `canvas: <HTMLCanvasElement | null>` Specify which canvas to render on, must be specified on web if the rendering mode is `'human'`. Default: `null`
+## class CartPoleEnv
 
-#### cartPoleEnv.reset()
+An implementation of the classic cart-pole balancing problem, based on the version described by Barto, Sutton, and Anderson.
 
-- Returns: `[<tf.Tensor>, <null>]` A tuple of observation (type float32 and shape [4]) and info (null).
+The agent must keep a pole upright by pushing a cart either left or right.
 
-Resets the environment.
+- Action space: [`Discrete(2)`](#class-discrete), where `0` pushes left and `1` pushes right.
+- Observation space: [`Box`](#class-box) with shape `[4]` and data type `'float32'`, representing the cart position, cart velocity, pole angle, and pole angular velocity.
+- Observations are `tf.Tensor`s.
 
-#### cartPoleEnv.step(action)
+### new CartPoleEnv(suttonBartoReward[, renderMode[, canvas]])
 
-- `action: <number>` The action chosen, `0` means push to the left and `1` means push to the right.
-- Returns: `Promise<[<tf.Tensor>, <number>, <boolean>, <boolean>, <null>]>` A tuple of observation (type float32 and shape [4]), reward, terminated, truncated and info (null).
+- `suttonBartoReward: <boolean>` Use the original Sutton-Barto reward function. Default: `false`
+- `renderMode: <string>|<null>` `null` for no rendering, `'human'` for a window or canvas, or `'rgb_array'` for frames as tensors. Default: `null`
+- `canvas: <HTMLCanvasElement>|<null>` The canvas to render on in browsers. Required when `renderMode` is not `null` in a browser. Default: `null`
+- Returns: `<CartPoleEnv>` the new environment.
 
-Takes one step in the environment.
+```ts
+const env = new gym.envs.classic_control.CartPoleEnv();
+```
 
-#### cartPoleEnv.render()
+With the default reward function, the environment returns `1` for every step that does not terminate and `0` on the terminating step.
+With `suttonBartoReward` enabled, it returns `0` for non-terminal steps and `-1` on the terminating step.
 
-- Returns: `Promise<void | tf.Tensor>` Either no return or an array of the screen of the environment.
+### cartPoleEnv.reset()
 
-Renders the environment on the canvas.
+- Returns: `[<tf.Tensor>, <null>]` an observation of shape `[4]` and `null` info.
 
-#### cartPoleEnv.close()
+Resets the cart position, cart velocity, pole angle, and pole angular velocity by sampling uniformly from `[-0.05, 0.05]`.
 
-Closes the window on Node JS.
+### cartPoleEnv.step(action)
 
-### classic_control.PendulumEnv
+- `action: <number>` `0` to push left, `1` to push right.
+- Returns: `Promise<[<tf.Tensor>, <number>, <boolean>, <boolean>, <null>]>` a tuple of observation, reward, terminated, truncated, and `null` info.
 
-Pendulum, an environment where the agent must learn to swing a pendulum upright and keep it balanced.
+Advances the simulation by `tau` seconds.
+The episode terminates when the cart position leaves `[-2.4, 2.4]` or the pole angle leaves `[-12°, 12°]`.
+`truncated` is always `false`.
+Throws if the action is not in the action space or if [`reset()`](#cartpoleenvreset) has not been called.
 
-#### PendulumEnv(g, renderMode, canvas)
+In `'human'` mode, `step()` also renders the environment and waits for one frame (60 FPS).
 
-- `g: <number>` Gravity, `10` by default.
-- `renderMode: <'human' | 'rgb_array' | null>` Specify the render mode, `null` means no rendering and `'human'` means rendering on a canvas. Default: `null`
-- `canvas: <HTMLCanvasElement | null>` Specify which canvas to render on, must be specified on web if the rendering mode is `'human'`. Default: `null`
+### cartPoleEnv.render()
 
-#### pendulumEnv.reset()
+- Returns: `Promise<void | tf.Tensor>`
 
-- Returns: `[<tf.Tensor>, <null>]` A tuple of observation (type float32 and shape [3]) and info (null).
+In `'human'` mode, draws the current state to the window or canvas.
+In `'rgb_array'` mode, returns a `tf.Tensor` of shape `[400, 600, 4]` containing RGBA pixels.
+Returns nothing when `renderMode` is `null`.
 
-Resets the environment.
+### cartPoleEnv.close()
 
-#### pendulumEnv.step(action)
+Destroys the native window, if one was created.
 
-- `action: <tf.Tensor>` The force applied, between `-2` and `2`. The absolute value is the strength of the force and positive value means that the force is rightward and negative means that it's leftward.
-- Returns: `Promise<[<tf.Tensor>, <number>, <boolean>, <boolean>, <null>]>` A tuple of observation (type float32 and shape [3]), reward, terminated, truncated and info (null).
+### CartPoleEnv constants
 
-Takes one step in the environment.
+| Constant                | Value       | Description                                 |
+| ----------------------- | ----------- | ------------------------------------------- |
+| `gravity`               | `9.8`       | Acceleration due to gravity.                |
+| `massCart`              | `1.0`       | Mass of the cart.                           |
+| `massPole`              | `0.1`       | Mass of the pole.                           |
+| `totalMass`             | `1.1`       | Total mass of the cart and pole.            |
+| `poleLength`            | `0.5`       | Half the length of the pole.                |
+| `polemassLength`        | `0.05`      | `massPole * poleLength`.                    |
+| `forceMag`              | `10.0`      | Magnitude of the force applied to the cart. |
+| `tau`                   | `0.02`      | Simulation time step in seconds.            |
+| `kinematicsIntegrator`  | `'euler'`   | Integration method.                         |
+| `thetaThresholdRadians` | `0.2094...` | Maximum pole angle, equal to 12 degrees.    |
+| `xThreshold`            | `2.4`       | Maximum cart position.                      |
+| `screenWidth`           | `600`       | Render width in pixels.                     |
+| `screenHeight`          | `400`       | Render height in pixels.                    |
+| `frameRate`             | `60`        | Frame rate used for human rendering.        |
 
-#### pendulumEnv.render()
+## class PendulumEnv
 
-- Returns: `Promise<void | tf.Tensor>` Either no return or an array of the screen of the environment.
+An implementation of the classic pendulum swing-up problem.
+The agent must swing a pendulum upright and keep it balanced.
 
-Renders the environment on the canvas.
+- Action space: [`Box`](#class-box) with shape `[1]`, data type `'float32'`, and bounds `[-2, 2]`. The action is the torque applied to the pendulum.
+- Observation space: [`Box`](#class-box) with shape `[3]`, data type `'float32'`, and bounds `[-1, -1, -8]` to `[1, 1, 8]`, representing `cos(theta)`, `sin(theta)`, and the angular velocity.
+- Observations are `tf.Tensor`s.
 
-#### pendulumEnv.close()
+### new PendulumEnv(g[, renderMode[, canvas]])
 
-Closes the window on Node JS.
+- `g: <number>` The acceleration due to gravity. Default: `10.0`
+- `renderMode: <string>|<null>` `null` for no rendering, `'human'` for a window or canvas, or `'rgb_array'` for frames as tensors. Default: `null`
+- `canvas: <HTMLCanvasElement>|<null>` The canvas to render on in browsers. Required when `renderMode` is not `null` in a browser. Default: `null`
+- Returns: `<PendulumEnv>` the new environment.
+
+```ts
+const env = new gym.envs.classic_control.PendulumEnv();
+```
+
+### pendulumEnv.reset()
+
+- Returns: `[<tf.Tensor>, <null>]` an observation of shape `[3]` and `null` info.
+
+Samples the angle uniformly from `[-π, π]` and the angular velocity uniformly from `[-1, 1]`, then returns `[cos(theta), sin(theta), thetaDot]`.
+
+### pendulumEnv.step(action)
+
+- `action: <tf.Tensor>` A tensor of shape `[1]` containing the torque.
+- Returns: `Promise<[<tf.Tensor>, <number>, <boolean>, <boolean>, <null>]>` a tuple of observation, reward, terminated, truncated, and `null` info.
+
+The action must be contained in the action space.
+It is clipped to `[-2, 2]` before being applied.
+The reward is the negative of the cost:
+
+```text
+cost = angleNormalize(theta)² + 0.1 * thetaDot² + 0.001 * torque²
+```
+
+`terminated` and `truncated` are always `false`.
+Throws if the action is not in the action space or if [`reset()`](#pendulumenvreset) has not been called.
+
+In `'human'` mode, `step()` also renders the environment and waits for one frame (30 FPS).
+
+### pendulumEnv.render()
+
+- Returns: `Promise<void | tf.Tensor>`
+
+In `'human'` mode, draws the current state to the window or canvas.
+In `'rgb_array'` mode, returns a `tf.Tensor` of shape `[500, 500, 4]` containing RGBA pixels.
+Returns nothing when `renderMode` is `null`.
+
+### pendulumEnv.close()
+
+Destroys the native window, if one was created.
+
+### PendulumEnv constants
+
+| Constant    | Value  | Description                                |
+| ----------- | ------ | ------------------------------------------ |
+| `maxSpeed`  | `8`    | Maximum angular velocity.                  |
+| `maxTorque` | `2.0`  | Maximum torque magnitude.                  |
+| `dt`        | `0.05` | Simulation time step in seconds.           |
+| `m`         | `1.0`  | Mass of the pendulum.                      |
+| `l`         | `1.0`  | Length of the pendulum.                    |
+| `screenDim` | `500`  | Render width and height in pixels.         |
+| `defaultX`  | `π`    | Maximum absolute initial angle.            |
+| `defaulty`  | `1.0`  | Maximum absolute initial angular velocity. |
+| `frameRate` | `30`   | Frame rate used for human rendering.       |
+
+## Rendering
+
+### Render modes
+
+| Value         | Description                                                                                               |
+| ------------- | --------------------------------------------------------------------------------------------------------- |
+| `null`        | No rendering. `render()` returns nothing.                                                                 |
+| `'human'`     | Displays the environment in an SDL window on Node.js, or draws to the supplied canvas in a browser.       |
+| `'rgb_array'` | `render()` returns the current frame as a `tf.Tensor` of shape `[height, width, 4]` with RGBA pixel data. |
+
+### Canvas
+
+On Node.js, the canvas used for drawing is created internally.
+In browsers, you must pass an `HTMLCanvasElement` to the environment constructor when `renderMode` is not `null`; otherwise the constructor throws.
+
+Human-window rendering is not supported on macOS; creating the window fails with an error.
+Use `'rgb_array'` or `null` on macOS instead.
+
+### Optional dependencies
+
+Node.js rendering uses two optional dependencies:
+
+- [`@kmamal/sdl`](https://www.npmjs.com/package/@kmamal/sdl) for window management
+- [`@napi-rs/canvas`](https://www.npmjs.com/package/@napi-rs/canvas) for Canvas2D drawing
+
+They are imported lazily, and only when a render mode is not `null`.
+If they are not installed, environments can still be used without rendering.
+
+### Frame timing
+
+In `'human'` mode, the built-in environments render during `step()` and then wait for one frame:
+
+- CartPole: 60 FPS
+- Pendulum: 30 FPS
+
+Calling `render()` manually draws immediately without waiting.
