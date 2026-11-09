@@ -1,21 +1,6 @@
-# gymjs
+# Gymjs
 
-[![Package](https://img.shields.io/npm/v/gymjs)](https://www.npmjs.com/package/gymjs)
-[![Dependencies](https://img.shields.io/librariesio/release/npm/gymjs)](https://libraries.io/npm/gymjs)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-Reinforcement learning environments for JavaScript and TypeScript.
-Provides an API modeled after Python's [Gymnasium](https://gymnasium.farama.org), with typed environments, observation and action spaces, composable wrappers, and a couple of classic-control environments:
-
-- 🤖 Standard `Env` and `Wrapper` API
-- 📦 Observation and action spaces
-- 🧩 Composable wrappers
-- 🎮 CartPole and Pendulum environments
-- 🖼 Rendering to SDL windows or browser canvases
-- 🧮 Most observations and actions are [`@tensorflow/tfjs`](https://www.npmjs.com/package/@tensorflow/tfjs) tensors; discrete spaces and CartPole actions use plain numbers
-
-Environments expose the familiar `reset()`, `step()`, `render()` and `close()` interface.
-Unlike the Python version, `reset()` is synchronous and `step()` returns a `Promise`.
+Gymjs is an open source JS library for developing environments for reinforcement learning by providing a standard API, similar to Python's gym, and a couple of compliant environments like Cartpole and Pendulum.
 
 ## Installation
 
@@ -23,40 +8,54 @@ Unlike the Python version, `reset()` is synchronous and `step()` returns a `Prom
 npm install gymjs
 ```
 
-`@tensorflow/tfjs` is installed automatically as a dependency.
-The native rendering libraries [`@kmamal/sdl`](https://www.npmjs.com/package/@kmamal/sdl) and [`@napi-rs/canvas`](https://www.npmjs.com/package/@napi-rs/canvas) are optional dependencies and are only loaded when rendering on Node.js.
+## API
 
-## Examples
+Gymjs's API is very similar to that of gymnasium. Python code for running CartPole's environment:
 
-### "Hello, World!"
+```py
+import gymnasium as gym
+env = gym.make("CartPole-v1")
+
+observation, info = env.reset(seed=42)
+for _ in range(1000):
+    action = env.action_space.sample()
+    observation, reward, terminated, truncated, info = env.step(action)
+
+    if terminated or truncated:
+        observation, info = env.reset()
+env.close()
+```
+
+Equivalent gymjs code:
 
 ```ts
 import * as gym from 'gymjs';
-
 const env = new gym.envs.classic_control.CartPoleEnv();
 
 let [observation, info] = env.reset();
 for (let i = 0; i < 1000; i++) {
-  const action = env.actionSpace.sample();
-  const [obs, reward, terminated, truncated, stepInfo] = await env.step(action);
+  let action = env.actionSpace.sample();
+  let [observation, reward, terminated, truncated, info] =
+    await env.step(action);
 
   if (terminated || truncated) {
-    [observation, info] = env.reset();
+    let [observation, info] = env.reset();
   }
 }
 env.close();
 ```
 
-### Custom environment
+## Environment Example
+
+An example implementation of an environment:
 
 ```ts
 import * as tf from '@tensorflow/tfjs';
 import * as gym from 'gymjs';
 
-class Walker extends gym.Env<tf.Tensor, tf.Tensor> {
+class Walker extends gym.Env {
   agent: tf.Tensor;
   goal: tf.Tensor;
-
   constructor() {
     const actionSpace = new gym.spaces.Box(0, 1, [2], 'float32');
     const observationSpace = new gym.spaces.Box(0, 1, [4], 'float32');
@@ -76,7 +75,9 @@ class Walker extends gym.Env<tf.Tensor, tf.Tensor> {
 
   async step(
     action: tf.Tensor
-  ): Promise<[tf.Tensor, number, boolean, boolean, null]> {
+  ): Promise<
+    [tf.Tensor, number, boolean, boolean, Record<string, any> | null]
+  > {
     if (!this.actionSpace.contains(action)) {
       throw Error('Action not in action space.');
     }
@@ -85,61 +86,28 @@ class Walker extends gym.Env<tf.Tensor, tf.Tensor> {
     const obs = this.agent.concat(this.goal);
     const distance = this.agent.sub(this.goal).norm().asScalar().dataSync()[0];
     const reward = -distance;
-    const done = distance < 0.01;
+
+    let done = distance < 0.01;
 
     return [obs, reward, done, false, null];
-  }
-
-  render(): Promise<void> {
-    return Promise.resolve();
   }
 
   close(): void {
     return;
   }
-}
 
-const walker = new Walker();
-// Automatically truncate the environment after 30 steps if it hasn't
-// terminated already
-const limitedWalker = new gym.wrappers.TimeLimit(walker, 30);
-```
-
-### Rendering
-
-Rendering is enabled by passing a render mode to the environment constructor.
-
-```ts
-import * as gym from 'gymjs';
-
-const env = new gym.envs.classic_control.CartPoleEnv(false, 'human');
-
-let [observation] = env.reset();
-for (let i = 0; i < 500; i++) {
-  const [, , terminated, truncated] = await env.step(env.actionSpace.sample());
-
-  if (terminated || truncated) {
-    [observation] = env.reset();
+  async render(): Promise<void> {
+    return;
   }
 }
-env.close();
+
+const walker = new Walker(); // Create an instance of the environment
+const limitedWalker = new gym.wrappers.TimeLimit(walker, 30); // Automatically truncate the environment after 30 steps if the environment hasn't terminated already
 ```
 
-The `'rgb_array'` mode returns the current frame instead of displaying it:
+**Disclaimer:** The project is still in its initial stages; expect a lot of bugs. The API is subject to change.
 
-```ts
-const env = new gym.envs.classic_control.PendulumEnv(10.0, 'rgb_array');
-env.reset();
-
-const frame = await env.render(); // tf.Tensor with shape [500, 500, 4]
-```
-
-In browsers, a canvas must be supplied when rendering is enabled:
-
-```ts
-const canvas = document.querySelector('canvas')!;
-const env = new gym.envs.classic_control.CartPoleEnv(false, 'human', canvas);
-```
+---
 
 # API Reference
 
